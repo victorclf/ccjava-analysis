@@ -9,8 +9,8 @@ Dataset available at: <http://1drv.ms/1RZXEcF>
 ```{r, echo=FALSE, message=FALSE}
 library(dplyr)
 library(ggplot2)
-summ <- read.csv("allSummary.csv")
-partitions <- read.csv("allPartitions.csv")
+summ <- read.csv("data/allSummary.csv")
+partitions <- read.csv("data/allPartitions.csv")
 
 pullRequests <- select(summ, projectName, pullRequestId)
 
