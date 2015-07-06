@@ -1,0 +1,56 @@
+---
+title: "ccjava-analysis"
+output: pdf_document
+---
+# Introduction
+
+Dataset available at: <http://1drv.ms/1RZXEcF>
+
+```{r, echo=FALSE, message=FALSE}
+library(dplyr)
+library(ggplot2)
+summ <- read.csv("allSummary.csv")
+partitions <- read.csv("allPartitions.csv")
+
+pullRequests <- select(summ, projectName, pullRequestId)
+
+filesChanged <- select(summ, filesChanged = sourceFiles)
+
+enclosingMethods <- partitions %>%
+  select(projectName, pullRequestId, enclosingMethodDefId) %>%
+  distinct() %>%
+  filter(enclosingMethodDefId != "null")
+methodsChanged <-left_join(pullRequests, enclosingMethods) %>%
+  group_by(projectName, pullRequestId) %>%
+  summarise(methodsChanged = sum(!is.na(enclosingMethodDefId)))
+
+diffRegions <- select(summ, diffRegions = diffs)
+
+trivialPartitions <- select(summ, trivialPartitions)
+
+nonTrivialPartitions <- select(summ, nonTrivialPartitions)
+```
+
+# Histogram of trivial partitions
+
+```{r, echo=FALSE}
+ggplot(data=summ, aes(trivialPartitions)) + geom_histogram(breaks=seq(0, 20, by=1), col="black", fill="lightblue")
+summary(summ$trivialPartitions)
+```
+
+# Histogram of non-trivial partitions
+
+```{r, echo=FALSE}
+ggplot(data=nonTrivialPartitions, aes(nonTrivialPartitions)) + geom_histogram(breaks=seq(0, 10, by=1), col="black", fill="lightblue")
+summary(nonTrivialPartitions$nonTrivialPartitions)
+```
+
+# Boxplots of change sizes
+```{r, echo=FALSE, warning=FALSE}
+ggplot(filesChanged, aes(x="filesChanged", y=filesChanged)) + geom_boxplot() + ylim(c(0, 30))
+summary(filesChanged$filesChanged)
+ggplot(methodsChanged, aes(x="methodsChanged", y=methodsChanged)) + geom_boxplot() + ylim(c(0, 50))
+summary(methodsChanged$methodsChanged)
+ggplot(diffRegions, aes(x="diffRegions", y=diffRegions)) + geom_boxplot() + ylim(c(0, 100))
+summary(diffRegions$diffRegions)
+```
