@@ -1,10 +1,60 @@
 ---
-title: "ccjava-analysis"
+title: "Analysis of ClusterChanges technique applied to Java open source projects at GitHub"
 output: pdf_document
 ---
 # Introduction
 
-Dataset available at: <http://1drv.ms/1RZXEcF>
+Considering the promising results of the recently devised ClusterChanges technique published by Barnett et al., we would like to better understand how widely applicable the technique is. To this end, we are going to analyze how ClusterChanges performs in a different context, namely open source projects written in Java by different organizations and which are hosted at GitHub. In this initial study, we aimed to replicate the original quantitative study as closely as possible while using a different context.
+
+We have implemented the ClusterChanges technique for Java projects and refer to this implementation as ccjava in this document. As the Roslyn compiler only works with C# code, we used the Eclipse Compiler for Java (ECJ) for parsing Java code in order to identify def-use, use-use and same enclosing methods relationships between diff-regions. We chose ECJ because it's a mature, open and incremental compiler whose main goal is analyzing partial programs that may not be fully compilable. The Eclipse IDE uses ECJ for performing real-time static analysis while the developers are editing the source code.
+
+# Goal
+
+* Analyze the effectiveness of ClusterChanges in the context of open source projects;
+* Compare these results with the original study results which were obtained in a different context.
+
+# Data collection
+
+In this section, we describe how we obtained the data used in this analysis. The dataset used is available at: <http://1drv.ms/1RZXEcF>
+
+## Software project sample selection
+
+We chose 10 software projects from GitHub in the following way:
+
+1. In the GitHub web page, we asked for the list of open source Java projects in descending order of **stars** (search string: *stars:>1 language:java*). We hypothesized that the projects with the most stars are the most popular and would have the most pull requests.
+2. Then we manually analyzed each software project in the list (until we had 10 projects) and selected it for the study if:
+  + It used GitHub's pull request system;
+  + It was not a mirror of a repository maintained somewhere else. When this is case, the GitHub's pull request system  is not being used by the project;
+  + It had at least 300 pull requests;
+  + It was targeted at the JVM (Android exclusive projects were not considered);
+
+## Pull request
+
+A pull request consists of the created/modified files (after-files) and their corresponding diff files.
+
+## Pull request sampling
+
+For each software project:
+
+1. Sampled 300 pull requests at random that matched the following criteria:
+  + Had at least one Java source code after-file (deleted files are ignored)
+2. Ran ccjava on these 300 pull requests;
+3. Of these 300 pull requests, sampled 100 pull requests at random that matched the following criteria:
+  + Was analyzed by ccjava without errors or warnings (see Limitations section at the end)
+
+# Dataset description
+
+The dataset is composed of the files below which were obtained after running ccjava on 1000 changesets:
+
+* allDefs.csv (Project name, Pull request ID, Definition ID, Source file, Character span, Name, Is type definition?, Is method definition?, Is inside a diff-region?)
+* allUses.csv (Project name, Pull request ID, Use ID, Source file, Character span, Name, Associated definition)
+* allDiffs.csv (Project name, Pull request ID, Diff-region ID, Source file, Line span, Character span)
+* allDiffRelations.csv (Project name, Pull request ID, Relation ID, Relation type, Diff-region 1, Diff-region 2)
+* allPartitions.csv (Project name, Pull request ID, Partition ID, Is partition trivial?, A diff region that is part of the partition, Method enclosing the diff-region)
+* allSummary.csv (Project name, Pull request ID, Number of source files, Number of definitions, Number of uses, Number of diff-regions, Number of partitions, Number of non-trivial partitions, Number of trivial partitions)
+
+
+# Analysis
 
 ```{r, echo=FALSE, message=FALSE}
 library(dplyr)
@@ -54,3 +104,11 @@ summary(methodsChanged$methodsChanged)
 ggplot(diffRegions, aes(x="diffRegions", y=diffRegions)) + geom_boxplot() + ylim(c(0, 100))
 summary(diffRegions$diffRegions)
 ```
+
+# Main findings
+
+TODO
+
+# Limitations
+As of this writing, some changesets aren't being fully analyzed by our tool. This seem to be caused by limitations in ECJ. For instance, we have observed that ECJ is not detecting the use of a field when this use is inside a lambda function. As this may result in missing relationships and seem to be implementation issues unrelated to ClusterChanges, we have excluded such changesets from the dataset for now.
+
