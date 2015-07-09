@@ -11,11 +11,11 @@ We have implemented the ClusterChanges technique for Java projects and refer to 
 # Goal
 
 * Analyze the effectiveness of ClusterChanges in the context of open source projects;
-* Compare these results with the original study results which were obtained in a different context.
+* Compare these results with the original study results, which were obtained in a different context.
 
 # Data collection
 
-In this section, we describe how we obtained the data used in this analysis. The dataset used is available at: <http://1drv.ms/1RZXEcF>
+In this section, we describe how we obtained the data used in this analysis. The dataset used is available at: <https://github.com/victorclf/ccjava-analysis>
 
 ## Software project sample selection
 
@@ -26,7 +26,7 @@ We chose 10 software projects from GitHub in the following way:
   + It used GitHub's pull request system;
   + It was not a mirror of a repository maintained somewhere else. When this is case, the GitHub's pull request system  is not being used by the project;
   + It had at least 300 pull requests;
-  + It was targeted at the JVM (Android exclusive projects were not considered);
+  + It was targeted at the JVM (i.e. Android exclusive projects were not considered);
 
 ## Pull request
 
