@@ -25,7 +25,7 @@ We chose 10 software projects from GitHub in the following way:
 2. Then we manually analyzed each software project in the list (until we had 10 projects) and selected it for the study if:
   + It used GitHub's pull request system;
   + It was not a mirror of a repository maintained somewhere else. When this is case, the GitHub's pull request system  is not being used by the project;
-  + It had at least 300 pull requests;
+  + It had at least 300 pull requests which contained Java source code;
   + It was targeted at the JVM (i.e. Android exclusive projects were not considered);
 
 ## Pull request
