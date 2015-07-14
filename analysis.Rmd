@@ -4,9 +4,14 @@ output: pdf_document
 ---
 # Introduction
 
-Considering the promising results of the recently devised ClusterChanges technique published by Barnett et al., we would like to better understand how widely applicable the technique is. To this end, we intend to analyze how ClusterChanges performs in a different context, namely open source projects written in Java by different organizations and which are hosted at GitHub. In this initial study, we aimed to replicate the original quantitative study as closely as possible while using a different context.
+Considering the promising results of the recently devised ClusterChanges (CC) technique published by Barnett et al., we would like to better understand how widely applicable the technique is. To this end, we intend to analyze how ClusterChanges performs in a different context, namely open source software projects written by different organizations. 
 
-We have implemented the ClusterChanges technique for Java projects and refer to this implementation as ccjava in this document. As the Roslyn compiler only works with C# code, we used the Eclipse Compiler for Java (ECJ) for parsing Java code in order to identify def-use, use-use and same enclosing methods relationships between diff-regions. We chose ECJ because it's a mature, open and incremental compiler whose main goal is analyzing partial programs that may not be fully compilable. The Eclipse IDE uses ECJ for performing real-time static analysis while the developers are editing the source code.
+In this initial study, we aimed to replicate the original quantitative study as closely as possible while using a an open source software context. Therefore, we applied the ClusterChanges technique to a sample of 1000 pull requests from the most popular Java OSS projects hosted at GitHub. 
+
+We chose to use pull requests because we believe they closely mirror the changesets used in the original CC study. That is, both are sets of pairs of changed files (before-file and after-file) that were submitted to be reviewed by other developers. As for using the most popular OSS projects, we hypothesized that they would have large numbers of pull requests to analyze. We chose GitHub because, at the time of writing, it is the largest code hoster in the world with about 21.3M repositories and a large amount of those are OSS projects. Regarding Java, aside from being a popular language for OSS projects, it allows us to verify if ClusterChanges is applicable to other programming languages.
+
+We have implemented the ClusterChanges technique for Java projects and refer to this implementation as *ccjava* in this document. As the Roslyn compiler only works with C# code, we used the Eclipse Compiler for Java (ECJ) for parsing Java code in order to identify def-use, use-use and same enclosing methods relationships between diff-regions. We chose ECJ because it's a mature, open and incremental compiler whose main goal is analyzing partial programs that may not be fully compilable. The Eclipse IDE uses ECJ for performing real-time static analysis while the developers are editing the source code.
+
 
 # Goal
 
@@ -60,6 +65,7 @@ The dataset is composed of the files below which were obtained after running ccj
 library(dplyr)
 library(ggplot2)
 library(grid)
+library(scales)
 summ <- read.csv("data/allSummary.csv")
 partitions <- read.csv("data/allPartitions.csv")
 
@@ -119,9 +125,10 @@ Quantiles
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
 quantile(x=filesChanged$filesChanged, probs=seq(0.05, 1, 0.05))
+filesChangedECDF = ecdf(filesChanged$filesChanged)
 ```
 
-
+The histogram of Java source code files that were edited in each pull request indicate that changes in pull requests tend to be focused on a very small amount of files. In this sample, `r percent(filesChangedECDF(2))` of the pull requests affected at most 2 files and `r percent(filesChangedECDF(4))` of the pull requests affected at most 4 files.
 
 ### Methods Changed
 
@@ -171,3 +178,6 @@ TODO
 # Limitations
 As of this writing, some changesets aren't being fully analyzed by our tool. This seem to be caused by limitations in ECJ. For instance, we have observed that ECJ is not detecting the use of a field when this use is inside a lambda function. As this may result in missing relationships and seem to be implementation issues unrelated to ClusterChanges, we have excluded such changesets from the dataset for now.
 
+# Future work
+
+* Is there a relationship between the number of non-trivial/trivial partitions and whether the pull request was accepted?
