@@ -107,7 +107,7 @@ diffRegionsBoxplot = ggplot(diffRegions, aes(x="", y=diffRegions)) +
   geom_boxplot() +
   coord_cartesian(ylim=c(0, 100)) +
   scale_y_continuous(breaks=seq(0, 100, by=5)) +
-  xlab("Diff Regions") +
+  xlab("Diff-regions") +
   ylab("")
 pushViewport(viewport(layout = grid.layout(1, 3)))
 print(filesChangedBoxplot, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
@@ -130,6 +130,10 @@ filesChangedECDF = ecdf(filesChanged$filesChanged)
 
 The histogram of Java source code files that were edited in each pull request indicate that changes in pull requests tend to be focused on a very small amount of files. In this sample, `r percent(filesChangedECDF(2))` of the pull requests affected at most 2 files and `r percent(filesChangedECDF(4))` of the pull requests affected at most 4 files.
 
+This result suggests that pull requests are small and consequently easy to understand. However, other studies including the original CC study found that, even if few files are changed, it is still hard to understand the changes if there are several diff-regions.
+
+TODO: investigate outliers
+
 ### Methods Changed
 
 ```{r, echo=FALSE, warning=FALSE}
@@ -139,20 +143,36 @@ ggplot(methodsChanged, aes(x=methodsChanged)) + geom_histogram(breaks=seq(0, 50,
 Quantiles
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
-quantile(x=methodsChanged$methodsChanged, probs=seq(0.05, 1, 0.05))
+methodsChangedQuantiles <- quantile(x=methodsChanged$methodsChanged, probs=seq(0.05, 1, 0.05))
+print(methodsChangedQuantiles)
+methodsChangedECDF <- ecdf(methodsChanged$methodsChanged)
 ```
 
-### Diff Regions
+The graph above show that the number of methods changed in a pull request tend to be small but it varies significantly. As much as `r percent(methodsChangedECDF(1))` of the pull requests only changed 1 method and the median of methods changed is `r methodsChangedQuantiles["50%"]`. However, since the distribution has a very long positive tail, pull requests that affect several methods are not unusual. The quantiles indicate that the second half of the distribution grows very quickly. In fact, we can see that 25% of the pull requests changed at least `r methodsChangedQuantiles["75%"]` methods and that 10% of the pull requests changed at least `r methodsChangedQuantiles["90%"]` methods.
+
+TODO: investigate outliers
+
+TODO: discuss the implications of this graph
+
+### Diff-regions
 
 ```{r, echo=FALSE, warning=FALSE}
-ggplot(diffRegions, aes(x=diffRegions)) + geom_histogram(breaks=seq(0, 100, by=1), col="black", fill="lightblue") + xlab("Diff Regions")
+ggplot(diffRegions, aes(x=diffRegions)) + geom_histogram(breaks=seq(0, 100, by=1), col="black", fill="lightblue") + xlab("Diff-regions")
 ```
 
 Quantiles
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
-quantile(x=diffRegions$diffRegions, probs=seq(0.05, 1, 0.05))
+diffRegionsQuantiles <- quantile(x=diffRegions$diffRegions, probs=seq(0.05, 1, 0.05))
+print(diffRegionsQuantiles)
+diffRegionsECDF <- ecdf(diffRegions$diffRegions)
 ```
+
+The distribution of diff-regions is strongly positively skewed. While `r percent(methodsChangedECDF(1))` of the pull requests have at most 1 diff-region and therefore are likely trivial to understand, as much as `r percent(1 - diffRegionsECDF(10))` pull requests have at least 10 diff-regions and 25% of the pull requests have at least `r diffRegionsQuantiles["75%"]` diff-regions. These large pull requests likely contain independent modifications and are hard to understand.
+
+TODO: investigate pull requests with 0 diff-regions. What are those?
+
+TODO: investigate outliers
 
 ## Partitions
 
