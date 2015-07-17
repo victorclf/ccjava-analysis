@@ -68,9 +68,21 @@ library(grid)
 library(scales)
 summ <- read.csv("data/allSummary.csv")
 partitions <- read.csv("data/allPartitions.csv")
-
 pullRequests <- select(summ, projectName, pullRequestId)
 
+# Adds methodsChanged column to summ
+enclosingMethods <- partitions %>%
+  select(projectName, pullRequestId, enclosingMethodDefId) %>%
+  distinct() %>%
+  filter(enclosingMethodDefId != "null")
+methodsChanged <- pullRequests %>%
+  left_join(enclosingMethods, by=c("projectName", "pullRequestId")) %>%
+  group_by(projectName, pullRequestId) %>%
+  summarise(methodsChanged = sum(!is.na(enclosingMethodDefId)))
+summ <- summ %>%
+  inner_join(methodsChanged, by=c("projectName", "pullRequestId"))
+
+# Adds diffsInNonTrivialPartitions and RDN column to summ
 diffsInNonTrivialPartitions <- pullRequests %>%
   left_join(filter(partitions, isTrivial == "false"), by=c("projectName", "pullRequestId")) %>%
   group_by(projectName, pullRequestId) %>%
@@ -90,13 +102,7 @@ nonTrivialPartitions <- select(summ, nonTrivialPartitions)
 
 ```{r, echo=FALSE, warning=FALSE}
 filesChanged <- select(summ, projectName, pullRequestId, filesChanged = sourceFiles)
-enclosingMethods <- partitions %>%
-  select(projectName, pullRequestId, enclosingMethodDefId) %>%
-  distinct() %>%
-  filter(enclosingMethodDefId != "null")
-methodsChanged <-left_join(pullRequests, enclosingMethods, by=c("projectName", "pullRequestId")) %>%
-  group_by(projectName, pullRequestId) %>%
-  summarise(methodsChanged = sum(!is.na(enclosingMethodDefId)))
+#methodsChanged <- select(summ, projectName, pullRequestId, methodsChanged)
 diffRegions <- select(summ, projectName, pullRequestId, diffRegions = diffs)
 ```
 
@@ -153,11 +159,26 @@ print(methodsChangedQuantiles)
 methodsChangedECDF <- ecdf(methodsChanged$methodsChanged)
 ```
 
-The graph above show that the number of methods changed in a pull request tend to be small but it varies significantly. As much as `r percent(methodsChangedECDF(1))` of the pull requests only changed 1 method and the median of methods changed is `r methodsChangedQuantiles["50%"]`. However, since the distribution has a very long positive tail, pull requests that affect several methods are not unusual. The quantiles indicate that the second half of the distribution grows very quickly. In fact, we can see that 25% of the pull requests changed at least `r methodsChangedQuantiles["75%"]` methods and that 10% of the pull requests changed at least `r methodsChangedQuantiles["90%"]` methods.
+The graph above show that the number of methods changed in a pull request tend to be small, but that it varies significantly and therefore pull requests that affect several methods are not unusual as evidenced by the very long positive tail. As much as `r percent(methodsChangedECDF(1))` of the pull requests only changed 1 method and the median of methods changed is `r methodsChangedQuantiles["50%"]`. In contrast, the second half of the distribution grows very quickly according to the quantiles. More specifically, we can see that 25% of the pull requests changed at least `r methodsChangedQuantiles["75%"]` methods and that 10% of the pull requests changed at least `r methodsChangedQuantiles["90%"]` methods.
 
-TODO: investigate outliers
+We analyzed the 5 pull requests with the most methods changed to see what caused so many methods to be modified. These pull requests are listed below:
 
-TODO: discuss the implications of this graph
+```{r, echo=FALSE, comment=""}
+methodsChangedDescOrder <- summ %>%
+  select(pName = projectName, prId = pullRequestId, methodsChanged, NTPs = nonTrivialPartitions, TPs = trivialPartitions, RDN = rdn) %>%
+  arrange(desc(methodsChanged))
+head(methodsChangedDescOrder, n=5)
+```
+
+The [pull request](https://github.com/netty/netty/pull/664) with 529 methods changed was valid and merged into the master branch. Most of the diff-regions consisted of changing the return value of several methods in a class hierarchy in order to support method chaining. Since the modified classes are meant to be used by users of the framework, there were few references to this modified methods and as a result there are a lot of partitions. Some of the modified methods were grouped into non-trivial partitions because test case methods referenced them (a def-use relationship).
+
+The 2nd and 4th pull requests were previously described in the *Files Changed* section.
+
+The [3rd pull request](https://github.com/libgdx/libgdx/pull/2889) mainly added classes which implement interfaces with a large number of methods. Unlike the 1st pull request with most methods changed, the partitioning of ClusterChanges worked well here because a lot of these methods reference the same class and consequently they were all grouped based on use-use relationships. 
+
+The [5th pull request](https://github.com/facebook/presto/pull/308) mainly modified the exceptions returned by two classes with a large number of methods.
+
+We conclude that the outliers shown here are valid occurrences and should not be discarded from our analysis.
 
 ### Diff-regions
 
