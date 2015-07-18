@@ -42,7 +42,7 @@ A pull request consists of the created/modified files (after-files) and their co
 For each software project:
 
 1. Sampled 300 pull requests at random that matched the following criteria:
-  + Had at least one Java source code after-file (deleted files are ignored)
+  + Had at least one Java source code after-file
 2. Ran ccjava on these 300 pull requests;
 3. Of these 300 pull requests, sampled 100 pull requests at random that matched the following criteria:
   + Was analyzed by ccjava without errors or warnings (see Limitations section at the end)
@@ -105,6 +105,12 @@ filesChanged <- select(summ, projectName, pullRequestId, filesChanged = sourceFi
 #methodsChanged <- select(summ, projectName, pullRequestId, methodsChanged)
 diffRegions <- select(summ, projectName, pullRequestId, diffRegions = diffs)
 ```
+
+In this section, we analyze our dataset of pull requests using the three metrics below, which were calculated for each pull request: 
+
+* files changed (number of files which were modified)
+* methods changed (methods which are inside a diff-region for each pull request)
+* diff-regions (contiguous sequence of lines that were added or modified; deleted lines are not considered)
 
 ### Files Changed
 
@@ -196,9 +202,16 @@ diffRegionsECDF <- ecdf(diffRegions$diffRegions)
 
 The distribution of diff-regions is strongly positively skewed. While `r percent(methodsChangedECDF(1))` of the pull requests have at most 1 diff-region and therefore are likely trivial to understand, as much as `r percent(1 - diffRegionsECDF(10))` pull requests have at least 10 diff-regions and 25% of the pull requests have at least `r diffRegionsQuantiles["75%"]` diff-regions. These large pull requests likely contain independent modifications and are hard to understand.
 
-TODO: investigate pull requests with 0 diff-regions. What are those?
+As in our previous discussions of other change size metrics, we now analyze the outliers for this distribution. At first glance, the existence of a pull request without any diff-regions seems to be an error, since a pull request represents a change and thus must have changed at least one line in the code. However, this is explained by the fact that ClusterChanges only looks at the after-files, i.e., deleted code is not considered. Hence, a pull request without any diff-regions is one where its authors only deleted lines.
 
-TODO: investigate outliers
+Listed below are the 5 pull requests with most diff-regions in the dataset. Because we have already manually investigated these data points in our previous discussions of other change size metrics and for the sake of brevity, we do not manually analyze these outliers again here.
+
+```{r, echo=FALSE, comment=""}
+diffRegionsDescOrder <- summ %>%
+  select(pName = projectName, prId = pullRequestId, diffs, NTPs = nonTrivialPartitions, TPs = trivialPartitions, RDN = rdn) %>%
+  arrange(desc(diffs))
+head(diffRegionsDescOrder, n=5)
+```
 
 ### Boxplots of Change Sizes (This Study X Original Study)
 
