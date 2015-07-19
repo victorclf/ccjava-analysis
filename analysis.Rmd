@@ -242,7 +242,11 @@ print(diffRegionsBoxplot, vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
 
 ![](images/boxplot-changesizes-origstudy.png)
 
-TODO: compare with original study
+In this section, we compare the change sizes of this dataset with the ones of the original study. The first three boxplots are the change sizes from this dataset and the next three are from the original study.
+
+Looking at the boxplots, we can readily see that this dataset changes are smaller than the ones analyzed in the original study. This suggests that pull requests are more cohesive and less complex than regular project changes. We hypothesize that this is because pull requests are usually created by outside developers who are not familiar with the code.
+
+Given the smaller size of this dataset changes compared to the changes of the original study dataset, we expect to see fewer non-trivial partitions in this dataset.
 
 ***
 
