@@ -126,10 +126,15 @@ In this section, we analyze our dataset of pull requests using the three metrics
 ### Files Changed
 
 ```{r, echo=FALSE, warning=FALSE}
-ggplot(filesChanged, aes(x=filesChanged)) + geom_histogram(breaks=seq(0, 30, by=1), col="black", fill="lightblue") + xlab("Files Changed")
+ggplot(filesChanged, aes(x=filesChanged)) + geom_histogram(breaks=seq(0, 20, by=1), col="black", fill="lightblue") +
+  coord_cartesian(xlim=c(-1, 20.5)) +
+  scale_x_discrete(breaks=seq(0, 20, by=1)) +
+  ggtitle("Histogram of Files Changed") +
+  xlab("Files Changed") +
+  ylab("Pull Requests")
 ```
 
-Quantiles
+**Quantiles**
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
 filesChangedQuantiles <- quantile(x=filesChanged$filesChanged, probs=seq(0.05, 1, 0.05))
@@ -165,10 +170,16 @@ The [5th pull request](https://github.com/dropwizard/dropwizard/pull/996) is als
 ### Methods Changed
 
 ```{r, echo=FALSE, warning=FALSE}
-ggplot(methodsChanged, aes(x=methodsChanged)) + geom_histogram(breaks=seq(0, 50, by=1), col="black", fill="lightblue") + xlab("Methods Changed")
+ggplot(methodsChanged, aes(x=methodsChanged)) +
+  geom_histogram(breaks=seq(0, 50, by=1), col="black", fill="lightblue") +
+  coord_cartesian(xlim=c(-1, 50.5)) +
+  scale_x_discrete(breaks=seq(0, 50, by=2)) +
+  ggtitle("Histogram of Methods Changed") +
+  xlab("Methods Changed") +
+  ylab("Pull Requests")
 ```
 
-Quantiles
+**Quantiles**
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
 methodsChangedQuantiles <- quantile(x=methodsChanged$methodsChanged, probs=seq(0.05, 1, 0.05))
@@ -200,10 +211,15 @@ We conclude that the outliers shown here are valid occurrences and should not be
 ### Diff-regions
 
 ```{r, echo=FALSE, warning=FALSE}
-ggplot(diffRegions, aes(x=diffRegions)) + geom_histogram(breaks=seq(0, 100, by=1), col="black", fill="lightblue") + xlab("Diff-regions")
+ggplot(diffRegions, aes(x=diffRegions)) + geom_histogram(col="black", fill="lightblue") +
+  coord_cartesian(xlim=c(-1, 100.5)) +
+  scale_x_discrete(breaks=seq(0, 100, by=10)) +
+  ggtitle("Histogram of Diff-regions") +
+  xlab("Diff-regions") +
+  ylab("Pull Requests")
 ```
 
-Quantiles
+**Quantiles**
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
 diffRegionsQuantiles <- quantile(x=diffRegions$diffRegions, probs=seq(0.05, 1, 0.05))
@@ -264,31 +280,50 @@ Given the smaller size of this dataset changes compared to the changes of the or
 
 ## Partitions
 
-### Histogram of trivial partitions
+### Trivial Partitions
 
 ```{r, echo=FALSE}
-ggplot(data=summ, aes(trivialPartitions)) + geom_histogram(breaks=seq(0, 20, by=1), col="black", fill="lightblue")
-summary(summ$trivialPartitions)
+ggplot(data=summ, aes(trivialPartitions)) +
+  geom_histogram(col="black", fill="lightblue") +
+  coord_cartesian(xlim=c(-1, 30.5)) +
+  scale_x_discrete(breaks=seq(0, 30, by=1)) +
+  ggtitle("Histogram of Trivial Partitions") +
+  xlab("Trivial Partitions") +
+  ylab("Pull Requests")
 ```
 
-TODO: replace summary by quantiles
+**Quantiles**
 
-### Histogram of non-trivial partitions
+```{r, echo=FALSE, warning=FALSE, comment=""}
+trivialPartitionsQuantiles <- quantile(x=summ$trivialPartitions, probs=seq(0.05, 1, 0.05))
+print(trivialPartitionsQuantiles)
+trivialPartitionsECDF <- ecdf(summ$trivialPartitions)
+```
+
+### Non-trivial Partitions
 
 ```{r, echo=FALSE}
-ggplot(data=nonTrivialPartitions, aes(nonTrivialPartitions)) + geom_histogram(breaks=seq(0, 10, by=1), col="black", fill="lightblue")
-summary(nonTrivialPartitions$nonTrivialPartitions)
+ggplot(data=nonTrivialPartitions, aes(nonTrivialPartitions)) + 
+  geom_histogram(col="black", fill="lightblue") +
+  coord_cartesian(xlim=c(-1, 10)) +
+  scale_x_discrete(breaks=seq(0, 9, by=1)) +
+  ggtitle("Histogram of Non-trivial Partitions") +
+  xlab("Non-trivial Partitions") +
+  ylab("Pull Requests")
 ```
 
-TODO: replace summary by quantiles
+**Quantiles**
+
+```{r, echo=FALSE, warning=FALSE, comment=""}
+nonTrivialPartitionsQuantiles <- quantile(x=summ$nonTrivialPartitions, probs=seq(0.05, 1, 0.05))
+print(nonTrivialPartitionsQuantiles)
+nonTrivialPartitionsECDF <- ecdf(summ$nonTrivialPartitions)
+```
 
 TODO: Look for correlations between partitions and filesChanged,methodsChanged and diff-regions
 
 
-***
-
-
-## Ratio of diff-regions inside non-trivial partitions (RDN)
+## Ratio of Diff-regions inside Non-trivial Partitions (RDN)
 
 In this section, we analyzed the metric RDN, which is the ratio of diff-regions inside a non-trivial partition to the total number of diff-regions. We believe this metric provides a better idea of the efficacy of the algorithm instead of looking solely at the number of non-trivial and trivial partitions. For instance, consider the pull request below:
 
@@ -301,17 +336,32 @@ summ %>%
 
 The high number of trivial partitions suggests that ClusterChanges wasn't very effective for this pull request when, in fact, it managed to group 82.8% of the diff-regions into non-trivial partitions.
 
+\newpage
+
 ```{r, echo=FALSE}
 ggplot(data=summ, aes(rdn)) + geom_histogram(binwidth=0.01, col="black", fill="lightblue") + 
-  ggtitle("Ratio of diff-regions inside non-trivial partitions (RDN)") + 
-  xlab("RDN (binwidth = 0.01)")
+  ggtitle("Ratio of Diff-regions inside Non-trivial Partitions (RDN)") + 
+  xlab("RDN (binwidth = 0.01)") +
+  ylab("Pull Requests")
+```
+
+
+```{r, echo=FALSE, comment=""}
 ggplot(data=filter(summ, !is.na(rdn), rdn > 0), aes(rdn)) + geom_histogram(binwidth=0.05, col="black", fill="lightblue") + 
-  ggtitle("Ratio of diff-regions inside non-trivial partitions (RDN) where RDN > 0") + 
-  xlab("RDN (binwidth = 0.05)")
-summary(summ$rdn)
+  ggtitle("Ratio of Diff-regions inside Non-trivial Partitions (RDN) where RDN > 0") + 
+  xlab("RDN (binwidth = 0.05)") +
+  ylab("Pull Requests")
+```
+
+\newpage
+
+**Quantiles**
+
+
+```{r, echo=FALSE, comment=""}
 rdnQuantiles <- quantile(x=summ$rdn, probs=seq(0.05, 1, 0.05), na.rm=TRUE)
-print(rdnQuantiles)
-#plot(ecdf(summ$rdn))
+print(rdnQuantiles, digits=3)
+rdnECDF <- ecdf(summ$rdn)
 ```
 
 
@@ -325,3 +375,5 @@ TODO
 # Future work
 
 * Is there a relationship between the number of non-trivial/trivial partitions and whether the pull request was accepted?
+
+# References
