@@ -1,10 +1,19 @@
 ---
 title: "Analysis of ClusterChanges technique applied to Java open source projects at GitHub"
-output: pdf_document
+csl: "ieee.csl"
+bibliography: "refs.bib"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
 ---
+
+\newpage
+
 # Introduction
 
-Considering the promising results of the recently devised ClusterChanges (CC) technique published by Barnett et al., we would like to better understand how widely applicable the technique is. To this end, we intend to analyze how ClusterChanges performs in a different context, namely open source software projects written by different organizations. 
+Considering the promising results of the recently devised ClusterChanges (CC) technique published by Barnett et al. [[@barnett_helping_2015]], we would like to better understand how widely applicable the technique is. To this end, we intend to analyze how ClusterChanges performs in a different context, namely open source software projects written by different organizations. 
 
 In this initial study, we aimed to replicate the original quantitative study as closely as possible while using a an open source software context. Therefore, we applied the ClusterChanges technique to a sample of 1000 pull requests from the most popular Java OSS projects hosted at GitHub. 
 
@@ -16,7 +25,7 @@ We have implemented the ClusterChanges technique for Java projects and refer to 
 # Goal
 
 * Analyze the effectiveness of ClusterChanges in the context of open source projects;
-* Compare these results with the original study results, which were obtained in a different context.
+* Compare these results with the original study results [[@barnett_helping_2015]], which were obtained in a different context.
 
 # Data collection
 
@@ -46,6 +55,7 @@ For each software project:
 2. Ran ccjava on these 300 pull requests;
 3. Of these 300 pull requests, sampled 100 pull requests at random that matched the following criteria:
   + Was analyzed by ccjava without errors or warnings (see Limitations section at the end)
+  
 
 # Dataset description
 
@@ -58,6 +68,7 @@ The dataset is composed of the files below which were obtained after running ccj
 * allPartitions.csv (Project name, Pull request ID, Partition ID, Is partition trivial?, A diff region that is part of the partition, Method enclosing the diff-region)
 * allSummary.csv (Project name, Pull request ID, Number of source files, Number of definitions, Number of uses, Number of diff-regions, Number of partitions, Number of non-trivial partitions, Number of trivial partitions)
 
+\newpage
 
 # Analysis
 
@@ -141,7 +152,7 @@ head(filesChangedDescOrder, n=5)
 summElastic5708 <- filter(summ, projectName == "elastic/elasticsearch", pullRequestId == 5708)
 ```
 
-The [1st pull request](https://github.com/elastic/elasticsearch/pull/5708) was accepted by the developers and is therefore a valid occurrence. However, we noted something quite interesting in the discussion  about it. The project developer reviewing the code expresses disappointment over the fact that the pull request actually consists of two separate tasks but has only one commit. After a brief discussion between the pull request author and this project developer, the latter agrees to merge the pull request as it is. Our implementation of ClusterChanges indeed generated 2 non-trivial partitions for this pull request and would likely have helped the project developer review this code. Of the `r select(summElastic5708, diffs)` diff-regions present in this pull request, `r select(summElastic5708, diffsInNonTrivialPartitions)` (`r select(summElastic5708, rdn)`) were grouped in these 2 non-trivial partitions.
+The [1st pull request](https://github.com/elastic/elasticsearch/pull/5708) was accepted by the developers and is therefore a valid occurrence. However, we noted something quite interesting in the discussion about it. The project developer reviewing the code expresses disappointment over the fact that the pull request actually consists of two separate tasks but has only one commit. After a brief discussion between the pull request author and this project developer, the latter agrees to merge the pull request as it is. Our implementation of ClusterChanges indeed generated 2 non-trivial partitions for this pull request and would likely have helped the project developer review this code. Of the `r select(summElastic5708, diffs)` diff-regions present in this pull request, `r select(summElastic5708, diffsInNonTrivialPartitions)` (`r select(summElastic5708, rdn)`) were grouped in these 2 non-trivial partitions.
 
 The [2nd pull request](https://github.com/netty/netty/pull/370) was accepted by the developers but merged manually and consists of code style (formatting) modifications. Most of the diff-regions are additions of a copyright header and ClusterChanges does not identify such relationships. This explains why so many source files were changed and why non-trivial partitions were not found.
 
@@ -213,6 +224,8 @@ diffRegionsDescOrder <- summ %>%
 head(diffRegionsDescOrder, n=5)
 ```
 
+\newpage
+
 ### Boxplots of Change Sizes (This Study X Original Study)
 
 ```{r, echo=FALSE, warning=FALSE}
@@ -247,8 +260,6 @@ In this section, we compare the change sizes of this dataset with the ones of th
 Looking at the boxplots, we can readily see that this dataset changes are smaller than the ones analyzed in the original study. This suggests that pull requests are more cohesive and less complex than regular project changes. We hypothesize that this is because pull requests are usually created by outside developers who are not familiar with the code.
 
 Given the smaller size of this dataset changes compared to the changes of the original study dataset, we expect to see fewer non-trivial partitions in this dataset.
-
-***
 
 
 ## Partitions
@@ -309,7 +320,7 @@ print(rdnQuantiles)
 TODO
 
 # Limitations
-As of this writing, some changesets aren't being fully analyzed by our tool. This seem to be caused by limitations in ECJ. For instance, we have observed that ECJ is not detecting the use of a field when this use is inside a lambda function. As this may result in missing relationships and seem to be implementation issues unrelated to ClusterChanges, we have excluded such changesets from the dataset for now.
+* As of this writing, some changesets aren't being fully analyzed by our tool. This seem to be caused by limitations in ECJ. For instance, we have observed that ECJ is not detecting the use of a field when this use is inside a lambda function. As this may result in missing relationships and seem to be implementation issues unrelated to ClusterChanges, we have excluded such changesets from the dataset for now.
 
 # Future work
 
