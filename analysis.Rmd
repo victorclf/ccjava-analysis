@@ -137,7 +137,7 @@ ggplot(filesChanged, aes(x=filesChanged)) + geom_histogram(breaks=seq(0, 20, by=
 **Quantiles**
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
-filesChangedQuantiles <- quantile(x=filesChanged$filesChanged, probs=seq(0.05, 1, 0.05))
+filesChangedQuantiles <- quantile(x=filesChanged$filesChanged, probs=seq(0, 1, 0.05))
 print(filesChangedQuantiles)
 filesChangedECDF <- ecdf(filesChanged$filesChanged)
 ```
@@ -182,7 +182,7 @@ ggplot(methodsChanged, aes(x=methodsChanged)) +
 **Quantiles**
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
-methodsChangedQuantiles <- quantile(x=methodsChanged$methodsChanged, probs=seq(0.05, 1, 0.05))
+methodsChangedQuantiles <- quantile(x=methodsChanged$methodsChanged, probs=seq(0, 1, 0.05))
 print(methodsChangedQuantiles)
 methodsChangedECDF <- ecdf(methodsChanged$methodsChanged)
 ```
@@ -222,7 +222,7 @@ ggplot(diffRegions, aes(x=diffRegions)) + geom_histogram(col="black", fill="ligh
 **Quantiles**
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
-diffRegionsQuantiles <- quantile(x=diffRegions$diffRegions, probs=seq(0.05, 1, 0.05))
+diffRegionsQuantiles <- quantile(x=diffRegions$diffRegions, probs=seq(0, 1, 0.05))
 print(diffRegionsQuantiles)
 diffRegionsECDF <- ecdf(diffRegions$diffRegions)
 ```
@@ -277,16 +277,34 @@ Looking at the boxplots, we can readily see that this dataset changes are smalle
 
 Given the smaller size of this dataset changes compared to the changes of the original study dataset, we expect to see fewer non-trivial partitions in this dataset.
 
+\newpage
 
 ## Partitions
 
-### Trivial Partitions
+```{r, echo=FALSE}
+ggplot(data=nonTrivialPartitions, aes(nonTrivialPartitions)) + 
+  geom_histogram(col="black", fill="lightblue") +
+  coord_cartesian(xlim=c(-1, 10)) +
+  scale_x_discrete(breaks=seq(0, 9, by=1)) +
+  ggtitle("Histogram of Non-Trivial Partitions") +
+  xlab("Non-Trivial Partitions") +
+  ylab("Pull Requests")
+```
+
+**Quantiles**
+
+```{r, echo=FALSE, warning=FALSE, comment=""}
+nonTrivialPartitionsQuantiles <- quantile(x=summ$nonTrivialPartitions, probs=seq(0, 1, 0.05))
+print(nonTrivialPartitionsQuantiles)
+nonTrivialPartitionsECDF <- ecdf(summ$nonTrivialPartitions)
+```
+
 
 ```{r, echo=FALSE}
 ggplot(data=summ, aes(trivialPartitions)) +
   geom_histogram(col="black", fill="lightblue") +
   coord_cartesian(xlim=c(-1, 30.5)) +
-  scale_x_discrete(breaks=seq(0, 30, by=1)) +
+  scale_x_discrete(breaks=seq(0, 30, by=2)) +
   ggtitle("Histogram of Trivial Partitions") +
   xlab("Trivial Partitions") +
   ylab("Pull Requests")
@@ -295,33 +313,25 @@ ggplot(data=summ, aes(trivialPartitions)) +
 **Quantiles**
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
-trivialPartitionsQuantiles <- quantile(x=summ$trivialPartitions, probs=seq(0.05, 1, 0.05))
+trivialPartitionsQuantiles <- quantile(x=summ$trivialPartitions, probs=seq(0, 1, 0.05))
 print(trivialPartitionsQuantiles)
 trivialPartitionsECDF <- ecdf(summ$trivialPartitions)
 ```
 
-### Non-trivial Partitions
+The three most common cases in descending order are pull requests with 1 non-trivial partition (`r percent(nonTrivialPartitionsECDF(1) - nonTrivialPartitionsECDF(0))`), pull requests without any non-trivial partitions (`r percent(nonTrivialPartitionsECDF(0))`) and pull requests with 2 non-trivial partitions (`r percent(nonTrivialPartitionsECDF(2) - nonTrivialPartitionsECDF(1))`).
 
-```{r, echo=FALSE}
-ggplot(data=nonTrivialPartitions, aes(nonTrivialPartitions)) + 
-  geom_histogram(col="black", fill="lightblue") +
-  coord_cartesian(xlim=c(-1, 10)) +
-  scale_x_discrete(breaks=seq(0, 9, by=1)) +
-  ggtitle("Histogram of Non-trivial Partitions") +
-  xlab("Non-trivial Partitions") +
-  ylab("Pull Requests")
-```
+As in the original study, we group the pull requests based on the number of partitions calculated by our ClusterChanges implementation:
 
-**Quantiles**
+* $<= 1$ non-trivial partition (`r percent(nonTrivialPartitionsECDF(1))`): We manually investigated a random sample of 50 changesets that fall under this category.
+* 2 - 5 non-trivial partitions (`r percent(nonTrivialPartitionsECDF(5) - nonTrivialPartitionsECDF(1))`): Changes of this size will be analyzed in a future qualitative study.
+* $>= 6$ non-trivial partitions (`r percent(1 - nonTrivialPartitionsECDF(5))`): Due to the low amount of pull requests with this many non-trivial partitions and the time constraints in the planned qualitative study, we do not further investigate the pull requests in this group.
+* $> 10$ trivial partitions (`r percent(1 - trivialPartitionsECDF(10))`): In accordance with the original study hypothesis that "a single developer’s change cannot consist of so many independent (sub) changes", we manually investigated 20 of the 211 pull requests which belong to this group in order to determine what relationships ClusterChanges does not detect and, as a result, gain insight on how it can be improved.
 
-```{r, echo=FALSE, warning=FALSE, comment=""}
-nonTrivialPartitionsQuantiles <- quantile(x=summ$nonTrivialPartitions, probs=seq(0.05, 1, 0.05))
-print(nonTrivialPartitionsQuantiles)
-nonTrivialPartitionsECDF <- ecdf(summ$nonTrivialPartitions)
-```
+### Pull Requests with $<= 1$ Non-Trivial Partitions
 
-TODO: Look for correlations between partitions and filesChanged,methodsChanged and diff-regions
+### Pull Requests with $> 10$ Trivial Partitions
 
+### TODO: Comparison with partition histograms of the original study?
 
 ## Ratio of Diff-regions inside Non-trivial Partitions (RDN)
 
@@ -359,13 +369,15 @@ ggplot(data=filter(summ, !is.na(rdn), rdn > 0), aes(rdn)) + geom_histogram(binwi
 
 
 ```{r, echo=FALSE, comment=""}
-rdnQuantiles <- quantile(x=summ$rdn, probs=seq(0.05, 1, 0.05), na.rm=TRUE)
+rdnQuantiles <- quantile(x=summ$rdn, probs=seq(0, 1, 0.05), na.rm=TRUE)
 print(rdnQuantiles, digits=3)
 rdnECDF <- ecdf(summ$rdn)
 ```
 
 
 # Main findings
+- Non-Trivial Partitions and Trivial Partitions distributions are similar to the original study. This indicates that ClusterChanges is as effective in the context of OSS projects as in the context of closed source software project.
+- Pull Requests tend to be smaller than regular commits by project developers and more cohesive
 
 TODO
 
@@ -374,6 +386,7 @@ TODO
 
 # Future work
 
-* Is there a relationship between the number of non-trivial/trivial partitions and whether the pull request was accepted?
+* Qualitative study investigating pull requests with between 2 and 5 non-trivial partitions
+* Is there a relationship between the number of non-trivial/trivial partitions and whether the pull request was accepted? If there is, ClusterChanges could be used as tool to predict the likelihood of a pull request being accepted.
 
 # References
