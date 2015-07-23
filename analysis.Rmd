@@ -115,6 +115,11 @@ filesChanged <- select(summ, projectName, pullRequestId, filesChanged = sourceFi
 diffRegions <- select(summ, projectName, pullRequestId, diffRegions = diffs)
 ```
 
+A pull request is a set of changes that a developer would like to see merged into the main source repository, i.e. pulled from this developer's fork and merged into the source repository. To better understand pull requests, it's interesting to know the two most popular collaboration models for OSS projects [[@github_pull_request]]:
+
+* *Fork & Pull*: core developers working on the project and outside contributors fork the project, make changes in their local repositories and issue pull requests. A group of maintainers have push access to the source repository and review the pull requests to decide what will be merged.
+* *Shared Repository Model*: the core developers have push access to the main repository. Pull requests are mainly used by outside developers who want to contribute code.
+
 In this section, we analyze our dataset of pull requests using the three metrics below, which were calculated for each pull request: 
 
 * files changed (number of files which were modified)
@@ -271,7 +276,7 @@ print(diffRegionsBoxplot, vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
 
 In this section, we compare the change sizes of this dataset with the ones of the original study. The first three boxplots are the change sizes from this dataset and the next three are from the original study.
 
-Looking at the boxplots, we can readily see that this dataset changes are smaller than the ones analyzed in the original study. This suggests that pull requests are more cohesive and less complex than regular project changes. We hypothesize that this is because pull requests are usually created by outside developers who are not familiar with the code.
+Looking at the boxplots, we can readily see that this dataset changes are smaller than the ones analyzed in the original study. This suggests that pull requests are more cohesive and less complex than regular project changes. We hypothesize that this is because pull requests are often created by outside developers who are not familiar with the code.
 
 Given the smaller size of this dataset changes compared to the changes of the original study dataset, we expect to see fewer non-trivial partitions in this dataset.
 
@@ -325,6 +330,7 @@ As in the original study, we group the pull requests based on the number of part
 * **$>= 6$ non-trivial partitions** (`r percent(1 - nonTrivialPartitionsECDF(5))`): Due to the low amount of pull requests with this many non-trivial partitions and the time constraints in the planned qualitative study, we do not further investigate the pull requests in this group.
 * **$> 10$ trivial partitions** (`r percent(1 - trivialPartitionsECDF(10))`): In accordance with the original study hypothesis that "a single developer’s change cannot consist of so many independent (sub) changes", we manually investigated 20 of the 211 pull requests which belong to this group in order to determine what relationships ClusterChanges does not detect and, as a result, gain insight on how it can be improved.
 histogram-partitions-origstudy
+
 ### Pull Requests with $<= 1$ Non-Trivial Partitions
 
 We investigated a random sample of 50 pull requests that have at most one non-trivial partition with the goal of determining if ClusterChanges grouped unrelated diff-regions in the same non-trivial partition.
@@ -338,7 +344,7 @@ pullRequestSampleNTPLT1 <- sample_n(filter(summ, nonTrivialPartitions <= 1), 50)
 write.csv(select(pullRequestSampleNTPLT1, projectName, pullRequestId, diffs, nonTrivialPartitions, trivialPartitions), "sample.csv")
 ```
 
-We observed that a common type of diff-region that is never grouped with any others is the sequence of package declaration and import statements before a type declaration. ccjava never groups a diff-region consisting of imports and package declarations with another diff-region.
+We observed that a very common type of diff-region that is never grouped with any others is the sequence of package declaration and import statements before a type declaration. ccjava never groups a diff-region consisting of imports and package declarations with another diff-region.
 
 TODO: Finish this section after the manual analysis is done.
 
