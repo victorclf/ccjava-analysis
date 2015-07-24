@@ -344,7 +344,11 @@ pullRequestSampleNTPLT1 <- sample_n(filter(summ, nonTrivialPartitions <= 1), 50)
 write.csv(select(pullRequestSampleNTPLT1, projectName, pullRequestId, diffs, nonTrivialPartitions, trivialPartitions), "sample.csv")
 ```
 
-We observed that a very common type of diff-region that is never grouped with any others is the sequence of package declaration and import statements before a type declaration. ccjava never groups a diff-region consisting of imports and package declarations with another diff-region.
+We observed that a very common type of diff-region that is never grouped with any others is the sequence of package declaration and import statements before a type declaration. ccjava never groups a diff-region consisting of imports and package declarations with another diff-region. Almost all pull requests have diff-regions of this type, which end up in separate trivial partitions.
+
+Diff-regions composed entirely of blank lines, comments and Javadoc comments are also frequent occurrences and each of such diff-regions also gets assigned it's own trivial partition.
+
+
 
 TODO: Finish this section after the manual analysis is done.
 
