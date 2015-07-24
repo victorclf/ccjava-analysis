@@ -230,7 +230,7 @@ print(diffRegionsQuantiles)
 diffRegionsECDF <- ecdf(diffRegions$diffRegions)
 ```
 
-The distribution of diff-regions is strongly positively skewed. While `r percent(methodsChangedECDF(1))` of the pull requests have at most 1 diff-region and therefore are likely trivial to understand, as much as `r percent(1 - diffRegionsECDF(10))` pull requests have at least 10 diff-regions and 25% of the pull requests have at least `r diffRegionsQuantiles["75%"]` diff-regions. These large pull requests likely contain independent modifications and are hard to understand.
+The distribution of diff-regions is strongly positively skewed. While `r percent(diffRegionsECDF(1))` of the pull requests have at most 1 diff-region and therefore are likely trivial to understand, as much as `r percent(1 - diffRegionsECDF(10))` pull requests have at least 10 diff-regions and 25% of the pull requests have at least `r diffRegionsQuantiles["75%"]` diff-regions. These large pull requests likely contain independent modifications and are hard to understand.
 
 As in our previous discussions of other change size metrics, we now analyze the outliers for this distribution. At first glance, the existence of a pull request without any diff-regions seems to be an error, since a pull request represents a change and thus must have changed at least one line in the code. However, this is explained by the fact that ClusterChanges only looks at the after-files, i.e., deleted code is not considered. Hence, a pull request without any diff-regions is one where its authors only deleted lines.
 
@@ -329,11 +329,11 @@ As in the original study, we group the pull requests based on the number of part
 * **2 - 5 non-trivial partitions** (`r percent(nonTrivialPartitionsECDF(5) - nonTrivialPartitionsECDF(1))`): Changes of this size will be analyzed in a future qualitative study.
 * **$>= 6$ non-trivial partitions** (`r percent(1 - nonTrivialPartitionsECDF(5))`): Due to the low amount of pull requests with this many non-trivial partitions and the time constraints in the planned qualitative study, we do not further investigate the pull requests in this group.
 * **$> 10$ trivial partitions** (`r percent(1 - trivialPartitionsECDF(10))`): In accordance with the original study hypothesis that "a single developer’s change cannot consist of so many independent (sub) changes", we manually investigated 20 of the 211 pull requests which belong to this group in order to determine what relationships ClusterChanges does not detect and, as a result, gain insight on how it can be improved.
-histogram-partitions-origstudy
+
 
 ### Pull Requests with $<= 1$ Non-Trivial Partitions
 
-We investigated a random sample of 50 pull requests that have at most one non-trivial partition with the goal of determining if ClusterChanges grouped unrelated diff-regions in the same non-trivial partition.
+We investigated a random sample of 50 pull requests that have at most one non-trivial partition with the goal of determining if ClusterChanges grouped unrelated diff-regions in the same non-trivial partition. The raw results of this analysis can be found in the file [manual-analysis-ntp-lessthan-1.xls](https://github.com/victorclf/ccjava-analysis/blob/master/manual-analysis-ntp-lessthan-1.xls)
 
 ```{r, echo=FALSE, warning=FALSE, comment=""}
 set.seed(1859321838)
@@ -344,15 +344,20 @@ pullRequestSampleNTPLT1 <- sample_n(filter(summ, nonTrivialPartitions <= 1), 50)
 write.csv(select(pullRequestSampleNTPLT1, projectName, pullRequestId, diffs, nonTrivialPartitions, trivialPartitions), "sample.csv")
 ```
 
-We observed that a very common type of diff-region that is never grouped with any others is the sequence of package declaration and import statements before a type declaration. ccjava never groups a diff-region consisting of imports and package declarations with another diff-region. Almost all pull requests have diff-regions of this type, which end up in separate trivial partitions.
+As in the original study, we performed a manual analysis of these pull requests following a process similar to Herzig and Zeller [[@herzig_impact_2013]]. Only two pull requests clearly contained independent changes and ccjava separated those changes into different partitions. In the pull requests analyzed, ClusterChanges never grouped unrelated diff-regions in the same partition.
 
-Diff-regions composed entirely of blank lines, comments and Javadoc comments are also frequent occurrences and each of such diff-regions also gets assigned it's own trivial partition.
+Our manual analysis also allowed us to learn more about what relationships ClusterChanges does not capture. We observed that a very common type of diff-region that is never grouped with any others is the sequence of package declaration and import statements before a type declaration at the beginning of Java source code files. This happens because ccjava does not consider such statements as definitions or uses. Almost all pull requests have diff-regions of this type and these end up in separate trivial partitions. Diff-regions composed entirely of blank lines, comments and Javadoc comments are also frequent occurrences and each of such diff-regions also gets assigned it's own trivial partition.
 
+In 4 of the 50 pull requests, we observed a few def-use and use-use relationships that were not detected by our implementation of ClusterChanges. Apparently, this is due to bugs in our implementation when generic types are present in the code. These will be investigated further and may be negatively affecting the analysis of ClusterChanges.
 
-
-TODO: Finish this section after the manual analysis is done.
 
 ### Pull Requests with $> 10$ Trivial Partitions
+
+```{r, echo=FALSE}
+
+```
+
+We manually analyzed a random sample of 15 out of `r nrow(filter(summ, trivialPartitions > 10))` pull requests with more than 10 trivial partitions. Considering it unlikely for a pull request to contain so many separate changes, we wanted to know more about the relationships that ccjava does not capture.
 
 TODO: Finish this section after the manual analysis is done.
 
@@ -413,13 +418,15 @@ rdnECDF <- ecdf(summ$rdn)
 TODO: Finish this section.
 
 - Non-Trivial Partitions and Trivial Partitions distributions are similar to the original study. This indicates that ClusterChanges is as effective in the context of OSS projects as in the context of closed source software project.
-- Pull Requests tend to be smaller than regular commits by project developers and more cohesive
+- Pull requests tend to be smaller than the changesets in the original study and more cohesive
+- ClusterChanges never grouped unrelated diff-regions into the same partition, i.e. there were not any false positives.
 
 # Limitations
 
 TODO: Finish this section.
 
 * As of this writing, some changesets aren't being fully analyzed by our tool. This seem to be caused by limitations in ECJ. For instance, we have observed that ECJ is not detecting the use of a field when this use is inside a lambda function. As this may result in missing relationships and seem to be implementation issues unrelated to ClusterChanges, we have excluded such changesets from the dataset for now.
+* In our manual analysis of part of the pull requests, we found that some def-use and use-use relationships are apparently not being detected due to bugs in our tool. These may negatively affect the perceived efficiency of ClusterChanges.
 
 # Future work
 
