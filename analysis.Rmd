@@ -410,28 +410,36 @@ We observed that a high number of trivial partitions is frequently caused by ref
 
 To begin with, the histograms of non-trivial partitions and trivial partitions obtained in this study (Figures \ref{fig:histNTP} and \ref{fig:histTP}) look very similar to the ones from the original study (Figures \ref{fig:origHistNTP} and \ref{fig:origHistTP}).
 
+Next, we compared the percentage of pull requests in each of the aforementioned groups (Table \ref{tab:groupComp}). As expected from our observations that pull requests tended to be smaller than the changesets in the original study, there were fewer partitions in this study than in the original one.
 
+| Group   |  This Study  |  Original Study  |
+|:----:|:----:|:-----:|
+|  **$<= 1$ non-trivial partition**   |  `r percent(nonTrivialPartitionsECDF(1))`   |   58%   |
+|  **2 - 5 non-trivial partitions**   |  `r percent(nonTrivialPartitionsECDF(5) - nonTrivialPartitionsECDF(1))`   |   40%   |
+|  **$>= 6$ non-trivial partitions**   |  `r percent(1 - nonTrivialPartitionsECDF(5))`   |   1.4%   |
+|  **$> 10$ trivial partitions**   |  `r percent(1 - trivialPartitionsECDF(10))`   |   11.9%   |
+
+Table: Comparison between groups of this study and the ones from the original study\label{tab:groupComp}
+
+\newpage
 
 # Main findings
 
-TODO: Finish this section.
-
-- Non-Trivial Partitions and Trivial Partitions distributions are similar to the original study. This indicates that ClusterChanges is as effective in the context of OSS projects as in the context of closed source software project.
-- Pull requests tend to be smaller than the changesets in the original study and more cohesive
-- ClusterChanges never grouped unrelated diff-regions into the same partition, i.e. there were not any false positives.
+* Non-Trivial Partitions and Trivial Partitions distributions are similar to the original study. This indicates that ClusterChanges is as effective in the context of OSS projects as in the context of closed source software project.
+* Pull requests tend to be smaller than the changesets in the original study and more cohesive
+* ClusterChanges never grouped unrelated diff-regions into the same partition, i.e. there were not any false positives.
 
 # Limitations
-
-TODO: Finish this section.
 
 * As of this writing, some changesets aren't being fully analyzed by our tool. This seem to be caused by limitations in ECJ. For instance, we have observed that ECJ is not detecting the use of a field when this use is inside a lambda function. As this may result in missing relationships and seem to be implementation issues unrelated to ClusterChanges, we have excluded such changesets from the dataset for now.
 * In our manual analysis of part of the pull requests, we found that some def-use and use-use relationships are apparently not being detected due to bugs in our tool. These may negatively affect the perceived efficiency of ClusterChanges.
 
 # Future work
 
-TODO: Finish this section.
+* Qualitative study investigating pull requests which have between 2 and 5 non-trivial partitions
+* Investigate whether there is a relationship between the number of non-trivial/trivial partitions and the acceptance of a pull request? If there is, ClusterChanges could be used as tool to predict the likelihood of a pull request being accepted.
+* Fix known bugs in ccjava
+* Repeat this qualitative study using commits instead of pull requests
 
-* Qualitative study investigating pull requests with between 2 and 5 non-trivial partitions
-* Is there a relationship between the number of non-trivial/trivial partitions and whether the pull request was accepted? If there is, ClusterChanges could be used as tool to predict the likelihood of a pull request being accepted.
 
 # References
