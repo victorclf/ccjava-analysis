@@ -7,6 +7,7 @@ output:
     toc: true
     toc_depth: 2
     number_sections: true
+    fig_caption: true
 ---
 
 \newpage
@@ -17,7 +18,7 @@ Considering the promising results of the recently devised ClusterChanges (CC) te
 
 In this initial study, we aimed to replicate the original quantitative study as closely as possible while using an open source software context. Therefore, we applied the ClusterChanges technique to a sample of 1000 pull requests from the most popular Java OSS projects hosted at GitHub. 
 
-We chose to use pull requests because we believe they closely mirror the changesets used in the original CC study. That is, both are sets of pairs of changed files (before-file and after-file) that were submitted to be reviewed by other developers. As for using the most popular OSS projects, we hypothesized that they would have large numbers of pull requests to analyze. We chose GitHub because, at the time of writing, it is the largest code hoster in the world with about 21.3M repositories and a large amount of those are OSS projects. Regarding Java, aside from being a popular language for OSS projects, it allows us to verify if ClusterChanges is applicable to other programming languages.
+We chose to use pull requests because we believe they closely mirror the changesets used in the original CC study. That is, both are sets of pairs of changed files (before-file and after-file) that are submitted to be reviewed by other developers. As for using the most popular OSS projects, we hypothesized that they would have large numbers of pull requests to analyze. We chose GitHub because, at the time of writing, it is the largest code hoster in the world with about 21.3M repositories and a large amount of those are OSS projects. Regarding Java, aside from being a popular language for OSS projects, it allows us to verify if ClusterChanges is applicable to other programming languages.
 
 We have implemented the ClusterChanges technique for Java projects and refer to this implementation as *ccjava* in this document. As the Roslyn compiler only works with C# code, we used the Eclipse Compiler for Java (ECJ) for parsing Java code in order to identify def-use, use-use and same enclosing methods relationships between diff-regions. We chose ECJ because it's a mature, open and incremental compiler whose main goal is analyzing partial programs that may not be fully compilable. The Eclipse IDE uses ECJ for performing real-time static analysis while the developers are editing the source code.
 
@@ -58,7 +59,7 @@ For each software project:
   
 
 # Dataset description
-
+  
 The dataset is composed of the files below which were obtained after running ccjava on 1000 pull requests:
 
 * allDefs.csv (Project name, Pull request ID, Definition ID, Source file, Character span, Name, Is type definition?, Is method definition?, Is inside a diff-region?)
@@ -77,6 +78,7 @@ library(dplyr)
 library(ggplot2)
 library(grid)
 library(scales)
+library(pander)
 summ <- read.csv("data/allSummary.csv")
 partitions <- read.csv("data/allPartitions.csv")
 pullRequests <- select(summ, projectName, pullRequestId)
@@ -128,7 +130,7 @@ In this section, we analyze our dataset of pull requests using the three metrics
 
 ### Files Changed
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.cap="Histogram showing the distribution of files changed in a pull request.\\label{fig:filesChanged}"}
 ggplot(filesChanged, aes(x=filesChanged)) + geom_histogram(breaks=seq(0, 20, by=1), col="black", fill="lightblue") +
   coord_cartesian(xlim=c(-1, 20.5)) +
   scale_x_discrete(breaks=seq(0, 20, by=1)) +
@@ -137,23 +139,28 @@ ggplot(filesChanged, aes(x=filesChanged)) + geom_histogram(breaks=seq(0, 20, by=
   ylab("Pull Requests")
 ```
 
-**Quantiles**
-
-```{r, echo=FALSE, warning=FALSE, comment=""}
+```{r, echo=FALSE, warning=FALSE, comment="", fig.cap="Empirical cumulative distribution function of files changed in a pull request.\\label{fig:ecdfFilesChanged}"}
 filesChangedQuantiles <- quantile(x=filesChanged$filesChanged, probs=seq(0, 1, 0.05))
-print(filesChangedQuantiles)
 filesChangedECDF <- ecdf(filesChanged$filesChanged)
+
+ggplot(filesChanged, aes(x=filesChanged)) +
+  stat_ecdf() +
+  coord_cartesian(xlim=c(-1, 50)) +
+  scale_x_discrete(breaks=seq(0, 50, by=2)) +
+  ggtitle("ECDF of Files Changed") +
+  xlab("Files Changed") +
+  ylab("F(x)")
 ```
 
-The histogram of Java source code files that were edited in each pull request indicate that changes in pull requests tend to be focused on a very small amount of files. In this sample, `r percent(filesChangedECDF(2))` of the pull requests affected at most 2 files and `r percent(filesChangedECDF(4))` of the pull requests affected at most 4 files.
+The histogram of Java source code files that were edited in each pull request (Figure \ref{fig:filesChanged}) indicate that changes in pull requests tend to be focused on a very small amount of files. In this sample, `r percent(filesChangedECDF(2))` of the pull requests affected at most 2 files and `r percent(filesChangedECDF(4))` of the pull requests affected at most 4 files.
 
-This result suggests that pull requests are small and consequently easy to understand. However, other studies including the original CC study found that, even if few files are changed, it is still hard to understand the changes if there are several diff-regions.
+This result suggests that pull requests are small and consequently easy to understand. However, other studies [[@rigby_convergent_2013]], [[@bacchelli_expectations_2013]] including the original CC study found that, even if few files are changed, it is still hard to understand the changes if there are several diff-regions.
 
 Although the 95% quantile is `r filesChangedQuantiles["95%"]`, the largest pull request modified `r filesChangedQuantiles["100%"]` files. Considering this, we manually analyzed the first 5 pull requests with most files changed (shown below) to see if anything interesting could be observed and if these pull requests are actually valid.
 
 ```{r, echo=FALSE, comment=""}
 filesChangedDescOrder <- summ %>%
-  select(pName = projectName, prId = pullRequestId, filesChanged = sourceFiles, NTPs = nonTrivialPartitions, TPs = trivialPartitions, RDN = rdn) %>%
+  select(pName = projectName, prId = pullRequestId, filesChanged = sourceFiles, diffs, NTPs = nonTrivialPartitions, TPs = trivialPartitions) %>%
   arrange(desc(filesChanged))
 head(filesChangedDescOrder, n=5)
 
@@ -170,9 +177,9 @@ The [4th pull request](https://github.com/spring-projects/spring-framework/pull/
 
 The [5th pull request](https://github.com/dropwizard/dropwizard/pull/996) is also valid and was accepted by the developers. The author replaced a widely used class in the project by another and as result there are a lot of diff-regions that are updates from references to the old class to references to the new class. For that reason, a lots of files were modified. Also, we believe it makes sense that only one non-trivial partition was detected here.
 
-### Methods Changed
+### Methods Changed\label{subsec:methodsChanged}
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.cap="Histogram showing the distribution of methods changed in a pull request.\\label{fig:methodsChanged}", fig.pos='H'}
 ggplot(methodsChanged, aes(x=methodsChanged)) +
   geom_histogram(breaks=seq(0, 50, by=1), col="black", fill="lightblue") +
   coord_cartesian(xlim=c(-1, 50.5)) +
@@ -182,21 +189,26 @@ ggplot(methodsChanged, aes(x=methodsChanged)) +
   ylab("Pull Requests")
 ```
 
-**Quantiles**
-
-```{r, echo=FALSE, warning=FALSE, comment=""}
+```{r, echo=FALSE, warning=FALSE, comment="", fig.cap="Empirical cumulative distribution function of methods changed in a pull request.\\label{fig:ecdfMethodsChanged}"}
 methodsChangedQuantiles <- quantile(x=methodsChanged$methodsChanged, probs=seq(0, 1, 0.05))
-print(methodsChangedQuantiles)
 methodsChangedECDF <- ecdf(methodsChanged$methodsChanged)
+
+ggplot(methodsChanged, aes(x=methodsChanged)) +
+  stat_ecdf()  +
+  coord_cartesian(xlim=c(-1, 100.5)) +
+  scale_x_discrete(breaks=seq(0, 100, by=5)) +
+  ggtitle("ECDF of Methods Changed") +
+  xlab("Methods Changed") +
+  ylab("F(x)")
 ```
 
-The graph above show that the number of methods changed in a pull request tend to be small, but that it varies significantly and therefore pull requests that affect several methods are not unusual as evidenced by the very long positive tail. As much as `r percent(methodsChangedECDF(1))` of the pull requests only changed 1 method and the median of methods changed is `r methodsChangedQuantiles["50%"]`. In contrast, the second half of the distribution grows very quickly according to the quantiles. More specifically, we can see that 25% of the pull requests changed at least `r methodsChangedQuantiles["75%"]` methods and that 10% of the pull requests changed at least `r methodsChangedQuantiles["90%"]` methods.
+The graph (Figure \ref{fig:methodsChanged}) show that the number of methods changed in a pull request tend to be small, but that it varies significantly and therefore pull requests that affect several methods are not unusual as evidenced by the very long positive tail. As much as `r percent(methodsChangedECDF(1))` of the pull requests only changed 1 method and the median of methods changed is `r methodsChangedQuantiles["50%"]`. In contrast, the second half of the distribution grows very quickly according to the quantiles. More specifically, we can see that 25% of the pull requests changed at least `r methodsChangedQuantiles["75%"]` methods and that 10% of the pull requests changed at least `r methodsChangedQuantiles["90%"]` methods.
 
 We analyzed the 5 pull requests with the most methods changed to see what caused so many methods to be modified. These pull requests are listed below:
 
 ```{r, echo=FALSE, comment=""}
 methodsChangedDescOrder <- summ %>%
-  select(pName = projectName, prId = pullRequestId, methodsChanged, NTPs = nonTrivialPartitions, TPs = trivialPartitions, RDN = rdn) %>%
+  select(pName = projectName, prId = pullRequestId, methodsChanged, diffs, NTPs = nonTrivialPartitions, TPs = trivialPartitions) %>%
   arrange(desc(methodsChanged))
 head(methodsChangedDescOrder, n=5)
 ```
@@ -213,7 +225,7 @@ We conclude that the outliers shown here are valid occurrences and should not be
 
 ### Diff-regions
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.cap="Histogram showing the distribution of diff-regions in a pull request.\\label{fig:diffRegions}"}
 ggplot(diffRegions, aes(x=diffRegions)) + geom_histogram(col="black", fill="lightblue") +
   coord_cartesian(xlim=c(-1, 100.5)) +
   scale_x_discrete(breaks=seq(0, 100, by=10)) +
@@ -222,15 +234,20 @@ ggplot(diffRegions, aes(x=diffRegions)) + geom_histogram(col="black", fill="ligh
   ylab("Pull Requests")
 ```
 
-**Quantiles**
-
-```{r, echo=FALSE, warning=FALSE, comment=""}
+```{r, echo=FALSE, warning=FALSE, comment="", fig.cap="Empirical cumulative distribution function of diff-regions in a pull request.\\label{fig:ecdfDiffRegions}"}
 diffRegionsQuantiles <- quantile(x=diffRegions$diffRegions, probs=seq(0, 1, 0.05))
-print(diffRegionsQuantiles)
 diffRegionsECDF <- ecdf(diffRegions$diffRegions)
+
+ggplot(diffRegions, aes(x=diffRegions)) +
+  stat_ecdf()  +
+  coord_cartesian(xlim=c(-1, 200.5)) +
+  scale_x_discrete(breaks=seq(0, 200, by=10)) +
+  ggtitle("ECDF of Diff-regions") +
+  xlab("Diff-regions") +
+  ylab("F(x)")
 ```
 
-The distribution of diff-regions is strongly positively skewed. While `r percent(diffRegionsECDF(1))` of the pull requests have at most 1 diff-region and therefore are likely trivial to understand, as much as `r percent(1 - diffRegionsECDF(10))` pull requests have at least 10 diff-regions and 25% of the pull requests have at least `r diffRegionsQuantiles["75%"]` diff-regions. These large pull requests likely contain independent modifications and are hard to understand.
+The distribution of diff-regions (Figure \ref{fig:diffRegions}) is strongly positively skewed. While `r percent(diffRegionsECDF(1))` of the pull requests have at most 1 diff-region and therefore are likely trivial to understand, as much as `r percent(1 - diffRegionsECDF(10))` pull requests have at least 10 diff-regions and 25% of the pull requests have at least `r diffRegionsQuantiles["75%"]` diff-regions. These large pull requests likely contain independent modifications and are hard to understand.
 
 As in our previous discussions of other change size metrics, we now analyze the outliers for this distribution. At first glance, the existence of a pull request without any diff-regions seems to be an error, since a pull request represents a change and thus must have changed at least one line in the code. However, this is explained by the fact that ClusterChanges only looks at the after-files, i.e., deleted code is not considered. Hence, a pull request without any diff-regions is one where its authors only deleted lines.
 
@@ -238,32 +255,31 @@ Listed below are the 5 pull requests with most diff-regions in the dataset. Beca
 
 ```{r, echo=FALSE, comment=""}
 diffRegionsDescOrder <- summ %>%
-  select(pName = projectName, prId = pullRequestId, diffs, NTPs = nonTrivialPartitions, TPs = trivialPartitions, RDN = rdn) %>%
+  select(pName = projectName, prId = pullRequestId, filesChanged = sourceFiles, diffs, NTPs = nonTrivialPartitions, TPs = trivialPartitions) %>%
   arrange(desc(diffs))
 head(diffRegionsDescOrder, n=5)
 ```
 
-\newpage
 
-### Boxplots of Change Sizes (This Study X Original Study)
+### Comparison with the boxplots of change sizes of the original study
 
-```{r, echo=FALSE, warning=FALSE}
+```{r boxplotsThisStudy, echo=FALSE, warning=FALSE, fig.cap="Boxplots of change sizes from this study.\\label{fig:boxplotsThisStudy}"}
 filesChangedBoxplot = ggplot(filesChanged, aes(x="", y=filesChanged)) +
   geom_boxplot() +
   coord_cartesian(ylim=c(0,30)) +
-  scale_y_continuous(breaks=seq(0, 30, by=2)) +
+  scale_y_continuous(breaks=seq(0, 30, by=5)) +
   xlab("Files Changed") +
   ylab("")
 methodsChangedBoxplot = ggplot(methodsChanged, aes(x="", y=methodsChanged)) +
   geom_boxplot() +
-  coord_cartesian(ylim=c(0,40)) +
-  scale_y_continuous(breaks=seq(0, 40, by=2)) +
+  coord_cartesian(ylim=c(0,50)) +
+  scale_y_continuous(breaks=seq(0, 50, by=10)) +
   xlab("Methods Changed") +
   ylab("")
 diffRegionsBoxplot = ggplot(diffRegions, aes(x="", y=diffRegions)) +
   geom_boxplot() +
   coord_cartesian(ylim=c(0, 100)) +
-  scale_y_continuous(breaks=seq(0, 100, by=5)) +
+  scale_y_continuous(breaks=seq(0, 100, by=20)) +
   xlab("Diff-regions") +
   ylab("")
 pushViewport(viewport(layout = grid.layout(1, 3)))
@@ -272,19 +288,18 @@ print(methodsChangedBoxplot, vp = viewport(layout.pos.row = 1, layout.pos.col = 
 print(diffRegionsBoxplot, vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
 ```
 
-![](images/boxplot-changesizes-origstudy.png)
+![Boxplots of change sizes from the *original* study.\label{fig:boxplotsOrigStudy}](images/boxplot-changesizes-origstudy.png)
 
-In this section, we compare the change sizes of this dataset with the ones of the original study. The first three boxplots are the change sizes from this dataset and the next three are from the original study.
+In this section, we compare the change sizes of this dataset (Figure \ref{fig:boxplotsThisStudy}) with the ones of the original study (Figure \ref{fig:boxplotsOrigStudy}). 
 
 Looking at the boxplots, we can readily see that this dataset changes are smaller than the ones analyzed in the original study. This suggests that pull requests are more cohesive and less complex than regular project changes. We hypothesize that this is because pull requests are often created by outside developers who are not familiar with the code.
 
 Given the smaller size of this dataset changes compared to the changes of the original study dataset, we expect to see fewer non-trivial partitions in this dataset.
 
-\newpage
 
 ## Partitions
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.cap="Histogram showing the distribution of non-trivial partitions.\\label{fig:histNTP}"}
 ggplot(data=nonTrivialPartitions, aes(nonTrivialPartitions)) + 
   geom_histogram(col="black", fill="lightblue") +
   coord_cartesian(xlim=c(-1, 10)) +
@@ -294,16 +309,19 @@ ggplot(data=nonTrivialPartitions, aes(nonTrivialPartitions)) +
   ylab("Pull Requests")
 ```
 
-**Quantiles**
-
-```{r, echo=FALSE, warning=FALSE, comment=""}
+```{r, echo=FALSE, warning=FALSE, comment="", fig.cap="Empirical cumulative distribution function of non-trivial partitions in a pull request.\\label{fig:ecdfNTP}"}
 nonTrivialPartitionsQuantiles <- quantile(x=summ$nonTrivialPartitions, probs=seq(0, 1, 0.05))
-print(nonTrivialPartitionsQuantiles)
 nonTrivialPartitionsECDF <- ecdf(summ$nonTrivialPartitions)
+
+ggplot(nonTrivialPartitions, aes(x=nonTrivialPartitions)) +
+  stat_ecdf()  +
+  scale_x_discrete(breaks=seq(0, 50, by=2)) +
+  ggtitle("ECDF of Non-Trivial Partitions") +
+  xlab("Non-Trivial Partitions") +
+  ylab("F(x)")
 ```
 
-
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.cap="Histogram showing the distribution of trivial partitions.\\label{fig:histTP}"}
 ggplot(data=summ, aes(trivialPartitions)) +
   geom_histogram(col="black", fill="lightblue") +
   coord_cartesian(xlim=c(-1, 30.5)) +
@@ -313,15 +331,35 @@ ggplot(data=summ, aes(trivialPartitions)) +
   ylab("Pull Requests")
 ```
 
-**Quantiles**
-
-```{r, echo=FALSE, warning=FALSE, comment=""}
+```{r, echo=FALSE, warning=FALSE, comment="", fig.cap="Empirical cumulative distribution function of trivial partitions in a pull request.\\label{fig:ecdfTP}"}
 trivialPartitionsQuantiles <- quantile(x=summ$trivialPartitions, probs=seq(0, 1, 0.05))
-print(trivialPartitionsQuantiles)
 trivialPartitionsECDF <- ecdf(summ$trivialPartitions)
+
+ggplot(trivialPartitions, aes(x=trivialPartitions)) +
+  stat_ecdf()  +
+  coord_cartesian(xlim=c(-1, 50.5)) +
+  scale_x_discrete(breaks=seq(0, 50, by=2)) +
+  ggtitle("ECDF of Trivial Partitions") +
+  xlab("Trivial Partitions") +
+  ylab("F(x)")
 ```
 
-The three most common cases in descending order are pull requests with 1 non-trivial partition (`r percent(nonTrivialPartitionsECDF(1) - nonTrivialPartitionsECDF(0))`), pull requests without any non-trivial partitions (`r percent(nonTrivialPartitionsECDF(0))`) and pull requests with 2 non-trivial partitions (`r percent(nonTrivialPartitionsECDF(2) - nonTrivialPartitionsECDF(1))`).
+According to the histogram of non-trivial partitions (Figure \ref{fig:histNTP}), the three most common cases in descending order are pull requests with 1 non-trivial partition (`r percent(nonTrivialPartitionsECDF(1) - nonTrivialPartitionsECDF(0))`), pull requests without any non-trivial partitions (`r percent(nonTrivialPartitionsECDF(0))`) and pull requests with 2 non-trivial partitions (`r percent(nonTrivialPartitionsECDF(2) - nonTrivialPartitionsECDF(1))`). Moreover, `r percent(nonTrivialPartitionsECDF(2))` of the pull requests have at most 2 non-trivial partitions and `r percent(nonTrivialPartitionsECDF(3))` of the pull request have at most 3 non-trivial partitions.
+
+Similarly, in the histogram of trivial partitions (Figure \ref{fig:histTP}), the three most common cases in descending order are pull requests with 1 trivial partition (`r percent(trivialPartitionsECDF(1) - trivialPartitionsECDF(0))`), pull requests without any trivial partitions (`r percent(trivialPartitionsECDF(0))`) and pull requests with 2 trivial partitions (`r percent(trivialPartitionsECDF(2) - trivialPartitionsECDF(1))`). Unlike the distribution of non-trivial partitions, there is a long tail and `r percent(1 - trivialPartitionsECDF(2))` of the pull requests have more than 2 trivial partitions.
+
+```{r, echo=FALSE, comment=""}
+ntpsDescOrder <- summ %>%
+  select(pName = projectName, prId = pullRequestId, filesChanged = sourceFiles, diffs, NTPs = nonTrivialPartitions, TPs = trivialPartitions) %>%
+  arrange(desc(NTPs))
+tpsDescOrder <- summ %>%
+  select(pName = projectName, prId = pullRequestId, filesChanged = sourceFiles, diffs, NTPs = nonTrivialPartitions, TPs = trivialPartitions) %>%
+  arrange(desc(TPs))
+#head(ntpsDescOrder, n=1)
+#head(tpsDescOrder, n=1)
+```
+
+Incidentally, both distributions share the same [largest outlier](https://github.com/netty/netty/pull/664), which has `r head(ntpsDescOrder, n=1)$NTPs` non-trivial partitions and `r head(tpsDescOrder, n=1)$TPs` trivial partitions. We discussed this pull request in subsection \ref{subsec:methodsChanged}, where we observed that it consists of changing the return type of several methods.
 
 As in the original study, we group the pull requests based on the number of partitions calculated by our ClusterChanges implementation:
 
@@ -346,71 +384,32 @@ write.csv(select(pullRequestSampleNTPLT1, projectName, pullRequestId, diffs, non
 
 As in the original study, we performed a manual analysis of these pull requests following a process similar to Herzig and Zeller [[@herzig_impact_2013]]. Only two pull requests clearly contained independent changes and ccjava separated those changes into different partitions. In the pull requests analyzed, ClusterChanges never grouped unrelated diff-regions in the same partition.
 
-Our manual analysis also allowed us to learn more about what relationships ClusterChanges does not capture. We observed that a very common type of diff-region that is never grouped with any others is the sequence of package declaration and import statements before a type declaration at the beginning of Java source code files. This happens because ccjava does not consider such statements as definitions or uses. Almost all pull requests have diff-regions of this type and these end up in separate trivial partitions. Diff-regions composed entirely of blank lines, comments and Javadoc comments are also frequent occurrences and each of such diff-regions also gets assigned it's own trivial partition.
-
 In 4 of the 50 pull requests, we observed a few def-use and use-use relationships that were not detected by our implementation of ClusterChanges. Apparently, this is due to bugs in our implementation when generic types are present in the code. These will be investigated further and may be negatively affecting the analysis of ClusterChanges.
 
 
 ### Pull Requests with $> 10$ Trivial Partitions
 
 ```{r, echo=FALSE}
-
+set.seed(1859321838)
+pullRequestSampleTPGT10 <- sample_n(filter(summ, trivialPartitions > 10), 15)
 ```
 
-We manually analyzed a random sample of 15 out of `r nrow(filter(summ, trivialPartitions > 10))` pull requests with more than 10 trivial partitions. Considering it unlikely for a pull request to contain so many separate changes, we wanted to know more about the relationships that ccjava does not capture.
+```{r, echo=FALSE, eval=FALSE}
+write.csv(select(pullRequestSampleTPGT10, projectName, pullRequestId, diffs, nonTrivialPartitions, trivialPartitions), "sample.csv")
+```
 
-TODO: Finish this section after the manual analysis is done.
+We manually analyzed a random sample of 15 out of `r nrow(filter(summ, trivialPartitions > 10))` pull requests with more than 10 trivial partitions. Considering it unlikely for a pull request to contain so many separate changes, we wanted to know more about the relationships that ccjava does not capture. The raw results of this analysis can be found in the file [manual-analysis-tp-greaterthan-10.xls](https://github.com/victorclf/ccjava-analysis/blob/master/manual-analysis-tp-greaterthan-10.xls)
+
+We observed that a high number of trivial partitions is frequently caused by refactorings such as code style and formatting changes and by changes dependent on code not available in the pull request.
 
 ### Comparison with partition histograms of the original study
 
-TODO: Finish this section.
+![Histogram showing the distribution of non-trivial partitions from the original study.\label{fig:origHistNTP}](images/histogram-ntp-origstudy.png)
 
-![](images/histogram-ntp-origstudy.png)
-![](images/histogram-tp-origstudy.png)
+![Histogram showing the distribution of trivial partitions from the original study.\label{fig:origHistTP}](images/histogram-tp-origstudy.png)
 
+To begin with, the histograms of non-trivial partitions and trivial partitions obtained in this study (Figures \ref{fig:histNTP} and \ref{fig:histTP}) look very similar to the ones from the original study (Figures \ref{fig:origHistNTP} and \ref{fig:origHistTP}).
 
-## Ratio of Diff-regions inside Non-trivial Partitions (RDN)
-
-TODO: Decide if this metric is indeed sound and useful. If so, finish this section.
-
-In this section, we analyzed the metric RDN, which is the ratio of diff-regions inside a non-trivial partition to the total number of diff-regions. We believe this metric provides a better idea of the efficacy of the algorithm instead of looking solely at the number of non-trivial and trivial partitions. For instance, consider the pull request below:
-
-```{r, echo=FALSE, comment=""}
-#head(arrange(select(summ, projectName, pullRequestId, diffs, nonTrivialPartitions, trivialPartitions, rdn), desc(diffs)), n=10)
-summ %>% 
-  select(pName = projectName, prId = pullRequestId, nonTrParts = nonTrivialPartitions, trParts = trivialPartitions, diffs, diffsInNonTrParts = diffsInNonTrivialPartitions, rdn) %>%
-  filter(pName == "netty/netty", prId == 4)
-```
-
-The high number of trivial partitions suggests that ClusterChanges wasn't very effective for this pull request when, in fact, it managed to group 82.8% of the diff-regions into non-trivial partitions.
-
-\newpage
-
-```{r, echo=FALSE}
-ggplot(data=summ, aes(rdn)) + geom_histogram(binwidth=0.01, col="black", fill="lightblue") + 
-  ggtitle("Ratio of Diff-regions inside Non-trivial Partitions (RDN)") + 
-  xlab("RDN (binwidth = 0.01)") +
-  ylab("Pull Requests")
-```
-
-
-```{r, echo=FALSE, comment=""}
-ggplot(data=filter(summ, !is.na(rdn), rdn > 0), aes(rdn)) + geom_histogram(binwidth=0.05, col="black", fill="lightblue") + 
-  ggtitle("Ratio of Diff-regions inside Non-trivial Partitions (RDN) where RDN > 0") + 
-  xlab("RDN (binwidth = 0.05)") +
-  ylab("Pull Requests")
-```
-
-\newpage
-
-**Quantiles**
-
-
-```{r, echo=FALSE, comment=""}
-rdnQuantiles <- quantile(x=summ$rdn, probs=seq(0, 1, 0.05), na.rm=TRUE)
-print(rdnQuantiles, digits=3)
-rdnECDF <- ecdf(summ$rdn)
-```
 
 
 # Main findings
