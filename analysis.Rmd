@@ -79,8 +79,8 @@ library(ggplot2)
 library(grid)
 library(scales)
 library(pander)
-summ <- read.csv("data/allSummary.csv")
-partitions <- read.csv("data/allPartitions.csv")
+summ <- read.csv("data/allSummary.csv.gz")
+partitions <- read.csv("data/allPartitions.csv.gz")
 pullRequests <- select(summ, projectName, pullRequestId)
 
 # Adds methodsChanged column to summ
