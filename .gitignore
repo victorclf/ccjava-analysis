@@ -2,9 +2,6 @@
 .Rhistory
 .Rapp.history
 
-# Dataset files
-*.csv
-
 # Example code in package build process
 *-Ex.R
 
