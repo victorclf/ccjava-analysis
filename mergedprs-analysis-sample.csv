@@ -1,0 +1,111 @@
+url,projectName,pullRequestId,sourceFiles,defs,uses,diffs,totalPartitions,nonTrivialPartitions,trivialPartitions,merged,markedAsMerged,reasonForRejection
+https://github.com/netty/netty/pull/3729,netty/netty,3729,3,389,867,4,3,0,3,true,false,
+https://github.com/spring-projects/spring-framework/pull/773,spring-projects/spring-framework,773,1,67,220,1,1,0,1,false,false,Core dev made a better fix
+https://github.com/libgdx/libgdx/pull/3051,libgdx/libgdx,3051,1,61,134,3,1,1,0,true,true,
+https://github.com/dropwizard/dropwizard/pull/537,dropwizard/dropwizard,537,1,50,76,2,1,0,1,true,true,
+https://github.com/junit-team/junit/pull/178,junit-team/junit,178,1,63,17,0,0,0,0,true,true,
+https://github.com/square/okhttp/pull/752,square/okhttp,752,7,1142,4238,11,3,2,1,true,true,
+https://github.com/junit-team/junit/pull/798,junit-team/junit,798,2,33,56,0,0,0,0,true,true,
+https://github.com/elastic/elasticsearch/pull/11067,elastic/elasticsearch,11067,2,274,1012,17,8,0,8,true,false,
+https://github.com/dropwizard/metrics/pull/87,dropwizard/metrics,87,2,121,138,5,3,1,2,false,false,Was already fixed
+https://github.com/junit-team/junit/pull/720,junit-team/junit,720,2,107,134,13,10,1,9,true,true,
+https://github.com/libgdx/libgdx/pull/161,libgdx/libgdx,161,1,134,443,1,1,0,1,true,true,
+https://github.com/facebook/presto/pull/2742,facebook/presto,2742,2,265,801,2,2,0,2,true,true,
+https://github.com/netty/netty/pull/3742,netty/netty,3742,1,73,133,6,1,1,0,true,false,
+https://github.com/junit-team/junit/pull/1037,junit-team/junit,1037,2,149,200,16,9,3,6,true,false,
+https://github.com/dropwizard/metrics/pull/393,dropwizard/metrics,393,13,264,366,37,16,1,15,false,false,Project specific technical reasons
+https://github.com/facebook/presto/pull/1655,facebook/presto,1655,1,85,293,1,1,0,1,true,false,
+https://github.com/dropwizard/metrics/pull/139,dropwizard/metrics,139,1,44,86,3,1,0,1,true,true,
+https://github.com/libgdx/libgdx/pull/2255,libgdx/libgdx,2255,1,132,344,8,2,0,2,true,true,
+https://github.com/facebook/presto/pull/3063,facebook/presto,3063,2,19,30,3,2,1,1,true,false,
+https://github.com/netty/netty/pull/2700,netty/netty,2700,4,61,98,28,11,1,10,true,false,
+https://github.com/spring-projects/spring-boot/pull/71,spring-projects/spring-boot,71,4,40,38,24,14,3,11,false,false,"There is no discussion. But, we found that the author created another pull request shortly after (#73) with only 2 commits out of the 8 inside this pull request and this new pull request was merged."
+https://github.com/facebook/presto/pull/303,facebook/presto,303,6,194,379,52,12,2,10,true,true,
+https://github.com/libgdx/libgdx/pull/2852,libgdx/libgdx,2852,3,464,2548,160,2,1,1,true,true,
+https://github.com/junit-team/junit/pull/256,junit-team/junit,256,3,111,111,40,32,1,31,true,true,
+https://github.com/junit-team/junit/pull/994,junit-team/junit,994,9,257,366,56,7,7,0,true,true,
+https://github.com/dropwizard/metrics/pull/228,dropwizard/metrics,228,2,54,83,10,2,2,0,true,true,
+https://github.com/junit-team/junit/pull/1111,junit-team/junit,1111,1,45,41,1,1,0,1,false,false,"There are 2 tiny but independent changes in this PR. Since one of these changes was done to an XML file, ccjava doesn't detect it. The dev asked the contributor to split the changes into 2 commits."
+https://github.com/netty/netty/pull/3493,netty/netty,3493,2,46,125,11,2,1,1,true,false,
+https://github.com/facebook/presto/pull/2623,facebook/presto,2623,1,119,188,12,7,1,6,true,true,
+https://github.com/spring-projects/spring-framework/pull/116,spring-projects/spring-framework,116,4,270,663,6,3,1,2,true,false,
+https://github.com/dropwizard/dropwizard/pull/759,dropwizard/dropwizard,759,3,130,216,6,1,1,0,true,true,
+https://github.com/dropwizard/dropwizard/pull/200,dropwizard/dropwizard,200,2,76,239,7,1,1,0,true,true,
+https://github.com/junit-team/junit/pull/435,junit-team/junit,435,1,28,14,0,0,0,0,true,true,
+https://github.com/elastic/elasticsearch/pull/5449,elastic/elasticsearch,5449,2,254,599,4,2,1,1,true,true,
+https://github.com/netty/netty/pull/96,netty/netty,96,5,258,944,11,7,1,6,true,false,
+https://github.com/junit-team/junit/pull/1015,junit-team/junit,1015,3,296,338,25,16,3,13,true,true,
+https://github.com/spring-projects/spring-boot/pull/3296,spring-projects/spring-boot,3296,9,1053,1872,36,5,2,3,true,false,
+https://github.com/spring-projects/spring-framework/pull/180,spring-projects/spring-framework,180,2,28,0,2,2,0,2,true,false,
+https://github.com/dropwizard/metrics/pull/14,dropwizard/metrics,14,1,9,11,2,1,1,0,true,true,
+https://github.com/facebook/presto/pull/2175,facebook/presto,2175,3,292,661,41,3,1,2,true,true,
+https://github.com/dropwizard/dropwizard/pull/663,dropwizard/dropwizard,663,1,20,22,2,1,1,0,true,true,
+https://github.com/spring-projects/spring-framework/pull/502,spring-projects/spring-framework,502,1,22,32,0,0,0,0,false,false,Core dev made a better fix
+https://github.com/junit-team/junit/pull/282,junit-team/junit,282,5,258,320,22,1,1,0,true,true,
+https://github.com/elastic/elasticsearch/pull/4183,elastic/elasticsearch,4183,1,130,363,6,3,2,1,true,false,
+https://github.com/facebook/presto/pull/2268,facebook/presto,2268,7,116,200,24,7,4,3,true,true,
+https://github.com/dropwizard/metrics/pull/57,dropwizard/metrics,57,1,91,179,3,1,0,1,false,false,Project specific technical reasons
+https://github.com/square/okhttp/pull/977,square/okhttp,977,16,1461,3772,79,11,2,9,true,true,
+https://github.com/spring-projects/spring-framework/pull/627,spring-projects/spring-framework,627,2,357,702,6,1,1,0,false,false,Core dev made a better fix
+https://github.com/dropwizard/metrics/pull/112,dropwizard/metrics,112,1,135,160,3,1,1,0,true,false,
+https://github.com/elastic/elasticsearch/pull/8527,elastic/elasticsearch,8527,4,78,173,5,4,0,4,true,false,
+https://github.com/libgdx/libgdx/pull/2000,libgdx/libgdx,2000,1,226,397,3,2,1,1,true,true,
+https://github.com/facebook/presto/pull/2825,facebook/presto,2825,5,172,347,31,6,1,5,true,false,
+https://github.com/spring-projects/spring-boot/pull/478,spring-projects/spring-boot,478,1,15,13,1,1,0,1,false,false,Closed by contributor on the same day without providing a reason.
+https://github.com/square/okhttp/pull/712,square/okhttp,712,3,595,1631,15,2,1,1,true,true,
+https://github.com/spring-projects/spring-framework/pull/47,spring-projects/spring-framework,47,1,7,0,0,0,0,0,false,false,Contributor was asked to create another pull request and send it to another branch.
+https://github.com/facebook/presto/pull/1466,facebook/presto,1466,2,95,307,14,3,1,2,true,true,
+https://github.com/spring-projects/spring-framework/pull/548,spring-projects/spring-framework,548,4,192,417,7,6,1,5,true,false,
+https://github.com/dropwizard/metrics/pull/205,dropwizard/metrics,205,7,94,131,25,13,4,9,false,false,Closed by contributor on the same day without providing a reason.
+https://github.com/elastic/elasticsearch/pull/8813,elastic/elasticsearch,8813,1,100,362,2,1,0,1,true,true,
+https://github.com/dropwizard/metrics/pull/523,dropwizard/metrics,523,2,21,18,3,1,1,0,false,false,Project specific technical reasons
+https://github.com/spring-projects/spring-framework/pull/370,spring-projects/spring-framework,370,2,69,89,25,5,2,3,true,false,
+https://github.com/junit-team/junit/pull/857,junit-team/junit,857,1,25,21,1,1,0,1,false,false,Contributor made an error in git and had to recreate the pull request.
+https://github.com/facebook/presto/pull/448,facebook/presto,448,5,103,146,25,2,2,0,true,true,
+https://github.com/libgdx/libgdx/pull/719,libgdx/libgdx,719,4,493,687,30,7,2,5,true,true,
+https://github.com/elastic/elasticsearch/pull/8689,elastic/elasticsearch,8689,10,504,1010,51,4,2,2,false,false,Project specific technical reasons
+https://github.com/spring-projects/spring-boot/pull/3103,spring-projects/spring-boot,3103,8,59,46,25,17,5,12,false,false,Closed by contributor on the same day without providing a reason.
+https://github.com/netty/netty/pull/2884,netty/netty,2884,1,41,104,1,1,0,1,true,false,
+https://github.com/dropwizard/metrics/pull/659,dropwizard/metrics,659,4,136,412,20,2,2,0,false,false,Project specific technical reasons
+https://github.com/spring-projects/spring-framework/pull/78,spring-projects/spring-framework,78,7,157,263,59,9,4,5,false,false,Closed because it is a duplicate of another issue in the JIRA bug tracker of this project.
+https://github.com/elastic/elasticsearch/pull/3449,elastic/elasticsearch,3449,1,57,137,1,1,0,1,true,false,
+https://github.com/dropwizard/dropwizard/pull/790,dropwizard/dropwizard,790,1,7,7,2,1,1,0,true,true,
+https://github.com/libgdx/libgdx/pull/1818,libgdx/libgdx,1818,2,70,149,2,1,1,0,false,false,"In the discussions, it was decided that the pull request was unnecessary."
+https://github.com/spring-projects/spring-boot/pull/3013,spring-projects/spring-boot,3013,3,108,203,42,5,2,3,true,false,
+https://github.com/junit-team/junit/pull/397,junit-team/junit,397,3,89,84,19,6,1,5,true,true,
+https://github.com/dropwizard/dropwizard/pull/634,dropwizard/dropwizard,634,1,94,92,9,1,1,0,true,true,
+https://github.com/facebook/presto/pull/342,facebook/presto,342,1,119,433,1,1,0,1,true,true,
+https://github.com/netty/netty/pull/927,netty/netty,927,3,257,1008,5,2,0,2,true,false,
+https://github.com/netty/netty/pull/3618,netty/netty,3618,2,455,1903,14,3,2,1,true,false,
+https://github.com/junit-team/junit/pull/353,junit-team/junit,353,13,225,283,90,21,4,17,false,false,"Because the review took a long time, the contributor lost interest in the pull request."
+https://github.com/dropwizard/dropwizard/pull/540,dropwizard/dropwizard,540,3,153,265,6,1,1,0,true,true,
+https://github.com/libgdx/libgdx/pull/2045,libgdx/libgdx,2045,2,50,32,1,1,0,1,true,true,
+https://github.com/spring-projects/spring-boot/pull/3056,spring-projects/spring-boot,3056,4,83,118,22,9,4,5,true,false,
+https://github.com/dropwizard/dropwizard/pull/113,dropwizard/dropwizard,113,7,90,92,45,22,2,20,false,false,Maintainer thought it would be best to refuse the proposed feature.
+https://github.com/spring-projects/spring-boot/pull/3363,spring-projects/spring-boot,3363,6,623,1199,19,2,1,1,true,false,
+https://github.com/elastic/elasticsearch/pull/4666,elastic/elasticsearch,4666,3,248,490,13,4,1,3,true,false,
+https://github.com/dropwizard/metrics/pull/257,dropwizard/metrics,257,2,61,101,5,1,1,0,false,false,Rejected because it is not a bug.
+https://github.com/netty/netty/pull/3421,netty/netty,3421,5,103,126,23,5,3,2,true,false,
+https://github.com/junit-team/junit/pull/571,junit-team/junit,571,5,175,200,42,32,1,31,false,false,Was already fixed.
+https://github.com/netty/netty/pull/512,netty/netty,512,1,13,14,0,0,0,0,true,true,
+https://github.com/netty/netty/pull/2578,netty/netty,2578,35,3045,7242,148,25,4,21,true,false,
+https://github.com/elastic/elasticsearch/pull/12073,elastic/elasticsearch,12073,3,56,104,24,4,1,3,true,true,
+https://github.com/dropwizard/metrics/pull/80,dropwizard/metrics,80,1,121,349,1,1,0,1,false,false,Core dev made a better fix
+https://github.com/netty/netty/pull/2802,netty/netty,2802,6,666,2420,101,26,4,22,true,false,
+https://github.com/elastic/elasticsearch/pull/11835,elastic/elasticsearch,11835,2,121,347,5,3,1,2,true,true,
+https://github.com/square/okhttp/pull/1623,square/okhttp,1623,1,249,616,0,0,0,0,true,true,
+https://github.com/facebook/presto/pull/2044,facebook/presto,2044,1,29,52,0,0,0,0,true,true,
+https://github.com/dropwizard/dropwizard/pull/473,dropwizard/dropwizard,473,5,158,274,24,2,1,1,true,true,
+https://github.com/netty/netty/pull/3444,netty/netty,3444,1,86,176,0,0,0,0,true,false,
+https://github.com/netty/netty/pull/2682,netty/netty,2682,1,85,208,2,2,0,2,true,false,
+https://github.com/junit-team/junit/pull/1031,junit-team/junit,1031,1,241,283,4,2,2,0,false,false,Project specific technical reasons
+https://github.com/dropwizard/metrics/pull/323,dropwizard/metrics,323,1,20,30,9,2,1,1,false,false,Reason was not stated. I guess it was not a bug.
+https://github.com/spring-projects/spring-framework/pull/452,spring-projects/spring-framework,452,1,98,196,4,1,0,1,true,false,Associated issue in JIRA bug tracker of the project indicates the pull request was merged.
+https://github.com/elastic/elasticsearch/pull/2469,elastic/elasticsearch,2469,1,65,216,1,1,0,1,true,false,
+https://github.com/dropwizard/metrics/pull/237,dropwizard/metrics,237,3,59,71,5,5,0,5,false,false,Reason was not stated.
+https://github.com/facebook/presto/pull/3192,facebook/presto,3192,1,300,1491,4,1,0,1,true,false,
+https://github.com/dropwizard/dropwizard/pull/713,dropwizard/dropwizard,713,1,25,23,1,1,0,1,false,false,Core dev made a better fix
+https://github.com/dropwizard/metrics/pull/111,dropwizard/metrics,111,1,140,397,1,1,0,1,true,true,
+https://github.com/dropwizard/metrics/pull/117,dropwizard/metrics,117,1,9,1,5,5,0,5,true,true,
+https://github.com/facebook/presto/pull/1340,facebook/presto,1340,1,139,339,7,1,0,1,true,true,
+https://github.com/dropwizard/dropwizard/pull/725,dropwizard/dropwizard,725,1,9,2,1,1,0,1,true,true,

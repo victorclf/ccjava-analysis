@@ -1,0 +1,14 @@
+```{r, echo=FALSE, warning=FALSE, comment=""}
+library(dplyr)
+library(ggplot2)
+library(grid)
+
+summ <- read.csv("data/allSummary.csv.gz")
+
+set.seed(1334532099)
+pullRequestSampleForMergedInspection <- sample_n(summ, 200)
+```
+
+```{r, echo=FALSE, eval=FALSE}
+write.csv(pullRequestSampleForMergedInspection, "mergedprs-analysis-sample.csv")
+```
