@@ -1,6 +1,7 @@
 ---
 title: "Analysis of sample of 110 closed pull requests"
 csl: "ieee.csl"
+bibliography: "mergedprs-analysis.bib"
 output: 
   pdf_document:
     toc: true
@@ -8,10 +9,14 @@ output:
     number_sections: true
 ---
 
-```{r, echo=FALSE, warning=FALSE, comment=""}
+\newpage
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=""}
 library(dplyr)
 library(ggplot2)
 library(grid)
+library(scales)
+library(pander)
 
 summ <- read.csv("data/allSummary.csv.gz")
 ```
@@ -26,12 +31,36 @@ write.csv(pullRequestSampleForMergedInspection, "mergedprs-analysis-sample.csv")
 cprs <- read.csv("mergedprs-analysis-sample.csv")
 ```
 
-# Goals
+# Research Questions
 
 * RQ1: Can we predict whether a pull request is merged (accepted) based on the number of partitions returned by ccjava?
 * RQ2: How common are pull requests that were merged but are not marked as such in GitHub?
 
-# RQ1
+# Dataset
+
+We manually inspected 110 closed pull requests selected at random from the most popular projects in GitHub and, for each of them, we determined: 
+
+* if it was merged (accepted);
+* if its status on GitHub is set to "merged"";
+* the cause for rejection if it was not merged.
+
+This dataset can be downloaded at: https://github.com/victorclf/ccjava-analysis/blob/master/mergedprs-analysis-sample.csv
+
+```{r, echo=FALSE}
+numPrs <- count(cprs)$n
+numMergedPrs <- count(filter(cprs, merged == "true"))$n
+numNonMergedPrs <- count(filter(cprs, merged == "false"))$n
+```
+
+| Merged  |  Count  |  Proportion  |
+|:----:|:----:|:-----:|
+|  Yes   |  `r numMergedPrs`   |   `r percent(numMergedPrs / numPrs)`   |
+|  No    |  `r numNonMergedPrs` |   `r percent(numNonMergedPrs / numPrs)`   |
+
+Table: Summary of the dataset.
+
+
+# RQ1: Can we predict whether a pull request is merged (accepted) based on the number of partitions returned by ccjava?
 
 ## Non-Trivial Partitions
 ```{r, echo=FALSE, eval=FALSE}
@@ -42,7 +71,7 @@ count(filter(cprs, nonTrivialPartitions == 0, merged == "true")) / count(filter(
 ggplot(cprs, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1) +
   facet_wrap(~merged, nrow = 2) +
-  ggtitle("Histogram of Non-Trivial Partitions in a Pull Request") +
+  ggtitle("Histograms of Non-Trivial Partitions in a Pull Request") +
   xlab("Non-Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
@@ -51,7 +80,7 @@ ggplot(cprs, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
 ```{r, echo=FALSE}
 ggplot(cprs, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1, alpha=0.5) +
-  ggtitle("Histogram of Non-Trivial Partitions in a Pull Request") +
+  ggtitle("Superimposed Histograms of Non-Trivial Partitions in a Pull Request") +
   xlab("Non-Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
@@ -65,12 +94,14 @@ ggplot(cprs, aes(x=merged, y=nonTrivialPartitions)) +
   ylab("Non-Trivial Partitions")
 ```
 
+The graphs do not indicate a significant relationship between non-trivial partitions and whether the pull request was merged.
+
 ## Trivial Partitions
 ```{r, echo=FALSE}
 ggplot(cprs, aes(x=trivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1) +
   facet_wrap(~merged, nrow = 2) +
-  ggtitle("Histogram of Trivial Partitions in a Pull Request") +
+  ggtitle("Histograms of Trivial Partitions in a Pull Request") +
   xlab("Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
@@ -79,7 +110,7 @@ ggplot(cprs, aes(x=trivialPartitions, y=..density.., fill=merged)) +
 ```{r, echo=FALSE}
 ggplot(cprs, aes(x=trivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1, alpha=0.5) +
-  ggtitle("Histogram of Trivial Partitions in a Pull Request") +
+  ggtitle("Superimposed Histograms of Trivial Partitions in a Pull Request") +
   xlab("Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
@@ -93,12 +124,14 @@ ggplot(cprs, aes(x=merged, y=trivialPartitions)) +
   ylab("Trivial Partitions")
 ```
 
+The graphs do not indicate a significant relationship between trivial partitions and whether the pull request was merged.
+
 ## Total Partitions
 ```{r, echo=FALSE}
 ggplot(cprs, aes(x=totalPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1) +
   facet_wrap(~merged, nrow=2) +
-  ggtitle("Histogram of Total Partitions in a Pull Request") +
+  ggtitle("Histograms of Total Partitions in a Pull Request") +
   xlab("Total Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
@@ -107,7 +140,7 @@ ggplot(cprs, aes(x=totalPartitions, y=..density.., fill=merged)) +
 ```{r, echo=FALSE}
 ggplot(cprs, aes(x=totalPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1, alpha=0.5) +
-  ggtitle("Histogram of Total Partitions in a Pull Request") +
+  ggtitle("Superimposed Histograms of Total Partitions in a Pull Request") +
   xlab("Total Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
@@ -120,3 +153,34 @@ ggplot(cprs, aes(x=merged, y=totalPartitions)) +
   xlab("Merged") +
   ylab("Total Partitions")
 ```
+
+The graphs do not indicate a significant relationship between total partitions and whether the pull request was merged.
+
+# RQ2: How common are pull requests that were merged but are not marked as such in GitHub?
+
+```{r, echo=FALSE}
+mtMerge <- margin.table(table(cprs$markedAsMerged, cprs$merged), margin=1:2)
+mtMergeColSum <- margin.table(table(cprs$markedAsMerged, cprs$merged), margin=1)
+mtMergeRowSum <- margin.table(table(cprs$markedAsMerged, cprs$merged), margin=2)
+ptMerge <- prop.table(table(cprs$markedAsMerged, cprs$merged))
+```
+
+|                            | Not Merged | Merged |  |
+|:--------------------------:|:------:|:----------:|:----------:|
+| GitHub reports as "Closed" |  `r mtMerge[1,1]` (`r percent(ptMerge[1,1])`)   |   `r mtMerge[1,2]` (`r percent(ptMerge[1,2])`)   | `r mtMergeColSum[1]` (`r percent(ptMerge[1,1] + ptMerge[1,2])`)
+| GitHub reports as "Merged" | `r mtMerge[2,1]` (0.0%) |   `r mtMerge[2,2]` (`r percent(ptMerge[2,2])`)   | `r mtMergeColSum[2]` (`r percent(ptMerge[2,1] + ptMerge[2,2])`)
+| | `r mtMergeRowSum[1]` (`r percent(ptMerge[1,1] + ptMerge[2,1])`) | `r mtMergeRowSum[2]` (`r percent(ptMerge[1,2] + ptMerge[2,2])`) | `r numPrs`  (100%) |
+
+Table: Two-way table depicting the variables: "merged" and "marked as merged"\label{tab:twoWayMerged}.
+
+Looking at Table \ref{tab:twoWayMerged}, we can see that `r mtMerge[1,2]` (`r percent(ptMerge[1,2])`) of the pull requests were merged (accepted) but GitHub does not report them as having been merged. This result is compatible with the observations of Kalliamvakou et al. [[@kalliamvakou_promises_2014]] and provides further evidence that researchers should not rely on the GitHub status to determine which pull requests have been merged.
+
+Table \ref{tab:twoWayMerged} also shows that there were no false-positives i.e. when GitHub reported a pull request as merged, our manual inspection confirmed this.
+
+# Conclusions
+
+We did not observe a relationship between the number of partitions detected by our implementation of ClusterChanges and whether the pull request was accepted. However, it is possible that the sample size was too small to detect such a relationship.
+
+As for RQ2, we found that almost one third of the pull requests in the dataset were merged but GitHub did not report them as having been merged. Given that this is a common occurrence, researchers must consider this when automatically mining this data from GitHub.
+
+# References
