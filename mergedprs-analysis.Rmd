@@ -144,6 +144,22 @@ ggplot(summ, aes(x=nonTrivialPartitions, color=merged)) +
   ylab("Non-Trivial Partitions")
 ```
 
+### Logistic Regression
+
+```{r, echo=FALSE}
+ntpGlm <- glm(merged ~ nonTrivialPartitions, family=binomial(link = "logit"), data=summ)
+summary(ntpGlm)
+ntpGlmLikeRatioP <- with(ntpGlm, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
+```
+
+Logistic regression allows us to evaluate if there is an association between the number of non-trivial partitions and the acceptance of a pull request and also to predict whether a pull request will be accepted if the resulting model fits well.
+
+Our null hypothesis H0 for this test is that the probability of a pull request being merged is not associated with the number of non-trivial partitions and we use a significance level of 5%.
+
+The p-value from the z-test for the coefficient of nonTrivialPartitions is high and therefore we do not reject its corresponding null hypothesis that the coefficient is different than 0.
+
+Moreover, using the likelihood ratio test to evaluate the goodness of fit of the model by comparing it with the null model, we obtained a p-value of `r ntpGlmLikeRatioP`. Thus, *there is no evidence to reject the null hypothesis H0* that there is no relationship between the probability of a pull request being merged and the number of non-trivial partitions at a significance level of 5%.
+
 ## Trivial Partitions
 ```{r, echo=FALSE}
 ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
