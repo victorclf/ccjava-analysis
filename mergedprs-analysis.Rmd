@@ -28,13 +28,35 @@ write.csv(pullRequestSampleForMergedInspection, "mergedprs-analysis-sample.csv")
 ```
 
 ```{r, echo=FALSE}
-cprs <- read.csv("mergedprs-analysis-sample.csv")
+summ <- read.csv("mergedprs-analysis-sample.csv")
+pullRequests <- select(summ, projectName, pullRequestId)
+partitions <- read.csv("data/allPartitions.csv.gz")
+partitions <- partitions %>%
+  semi_join(summ, by=c("projectName", "pullRequestId"))
+
+# Adds diffsInNonTrivialPartitions and RDN column to summ
+diffsInNonTrivialPartitions <- pullRequests %>%
+  left_join(filter(partitions, isTrivial == "false"), by=c("projectName", "pullRequestId")) %>%
+  group_by(projectName, pullRequestId) %>%
+  summarise(diffsInNonTrivialPartitions = sum(!is.na(isTrivial)))
+summ <- summ %>%
+  inner_join(diffsInNonTrivialPartitions, by=c("projectName", "pullRequestId")) %>%
+  mutate(rdn = diffsInNonTrivialPartitions / diffs)
+
+# Adds diffsInTrivialPartitions and RDN column to summ
+summ <- summ %>%
+  mutate(diffsInTrivialPartitions = diffs - diffsInNonTrivialPartitions) %>%
+  mutate(rdt = diffsInTrivialPartitions / diffs)
+
+# Remove pull requests without diffs
+summ <- filter(summ, diffs >= 1)
 ```
 
-# Research Questions
+# Research Question
 
-* RQ1: Can we predict whether a pull request is merged (accepted) based on the number of partitions returned by ccjava?
-* RQ2: How common are pull requests that were merged but are not marked as such in GitHub?
+* RQ1: Can we predict whether a pull request is merged (accepted) based on the number of partitions returned by JClusterChanges?
+
+Intuitively, we expect to observe an inverse correlation between the number of non-trivial partitions and the probability of the pull request being merged. That is, we expect that pull requests with multiple non-trivial partitions will have a low acceptance rate because they likely contain independent modifications and are consequently hard to understand and poorly organized.
 
 # Dataset
 
@@ -46,10 +68,12 @@ We manually inspected 110 closed pull requests selected at random from the most 
 
 This dataset can be downloaded at: https://github.com/victorclf/ccjava-analysis/blob/master/mergedprs-analysis-sample.csv
 
+For this analysis, we removed pull requests that did not have any diff-regions and ended up with 101 closed pull requests for the analysis. Some pull requests do not have any diff-regions because ccjava does not consider code deletions and diff-regions which contain only comments, import statements, package declarations, blank characters and empty lines.
+
 ```{r, echo=FALSE}
-numPrs <- count(cprs)$n
-numMergedPrs <- count(filter(cprs, merged == "true"))$n
-numNonMergedPrs <- count(filter(cprs, merged == "false"))$n
+numPrs <- count(summ)$n
+numMergedPrs <- count(filter(summ, merged == "true"))$n
+numNonMergedPrs <- count(filter(summ, merged == "false"))$n
 ```
 
 | Merged  |  Count  |  Proportion  |
@@ -64,123 +88,284 @@ Table: Summary of the dataset.
 
 ## Non-Trivial Partitions
 ```{r, echo=FALSE, eval=FALSE}
-count(filter(cprs, nonTrivialPartitions == 0, merged == "true")) / count(filter(cprs, merged == "true"))
+count(filter(summ, nonTrivialPartitions == 0, merged == "true")) / count(filter(summ, merged == "true"))
 ```
 
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
+ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1) +
   facet_wrap(~merged, nrow = 2) +
-  ggtitle("Histograms of Non-Trivial Partitions in a Pull Request") +
+  ggtitle("Histogram of Non-Trivial Partitions in a Pull Request") +
   xlab("Non-Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
-  geom_histogram(position = position_identity(), col="black", binwidth=1, alpha=0.5) +
-  ggtitle("Superimposed Histograms of Non-Trivial Partitions in a Pull Request") +
+ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_dodge(), col="black", binwidth=1) +
+  ggtitle("Histogram of Non-Trivial Partitions in a Pull Request (dodge)") +
   xlab("Non-Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=merged, y=nonTrivialPartitions)) +
+ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_stack(), col="black", binwidth=1) +
+  ggtitle("Histogram of Non-Trivial Partitions in a Pull Request (stack)") +
+  xlab("Non-Trivial Partitions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_fill(), col="black", binwidth=1) +
+  ggtitle("Histogram of Non-Trivial Partitions in a Pull Request (fill)") +
+  xlab("Non-Trivial Partitions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=merged, y=nonTrivialPartitions)) +
   geom_boxplot() +
-  ggtitle("Boxplots of Non-Trivial Partitions in a Pull Request") +
+  ggtitle("Boxplot of Non-Trivial Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Non-Trivial Partitions")
 ```
 
-The graphs do not indicate a significant relationship between non-trivial partitions and whether the pull request was merged.
+```{r, echo=FALSE}
+ggplot(summ, aes(x=nonTrivialPartitions, color=merged)) +
+  geom_density() +
+  ggtitle("Density Plot of Non-Trivial Partitions in a Pull Request") +
+  xlab("Merged") +
+  ylab("Non-Trivial Partitions")
+```
 
 ## Trivial Partitions
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=trivialPartitions, y=..density.., fill=merged)) +
+ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1) +
   facet_wrap(~merged, nrow = 2) +
-  ggtitle("Histograms of Trivial Partitions in a Pull Request") +
+  ggtitle("Histogram of Trivial Partitions in a Pull Request") +
   xlab("Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=trivialPartitions, y=..density.., fill=merged)) +
-  geom_histogram(position = position_identity(), col="black", binwidth=1, alpha=0.5) +
-  ggtitle("Superimposed Histograms of Trivial Partitions in a Pull Request") +
+ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_dodge(), col="black", binwidth=1) +
+  ggtitle("Histogram of Trivial Partitions in a Pull Request (dodge)") +
   xlab("Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=merged, y=trivialPartitions)) + 
+ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_stack(), col="black", binwidth=1) +
+  ggtitle("Histogram of Trivial Partitions in a Pull Request (stack)") +
+  xlab("Trivial Partitions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_fill(), col="black", binwidth=1) +
+  ggtitle("Histogram of Trivial Partitions in a Pull Request (fill)") +
+  xlab("Trivial Partitions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=merged, y=trivialPartitions)) + 
   geom_boxplot() +
   ggtitle("Boxplots of Trivial Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Trivial Partitions")
 ```
 
-The graphs do not indicate a significant relationship between trivial partitions and whether the pull request was merged.
+```{r, echo=FALSE}
+ggplot(summ, aes(x=trivialPartitions, color=merged)) +
+  geom_density() +
+  ggtitle("Density Plot of Trivial Partitions in a Pull Request") +
+  xlab("Merged") +
+  ylab("Trivial Partitions")
+```
+
+## Non-Trivial Partitions X Trivial Partitions
+```{r, echo=FALSE}
+ggplot(summ, aes(x=nonTrivialPartitions, y=trivialPartitions)) +
+  geom_jitter(position = position_jitter(height = 0, width = 0.3), alpha=0.5, size=3) +
+  facet_wrap(~merged, nrow = 2) +
+  ggtitle("Jitter Plot of Non-Trivial Partitions X Trivial Partitions (only width is jittered)") +
+  xlab("Non-Trivial Partitions") +
+  ylab("Trivial Partitions")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=nonTrivialPartitions, y=trivialPartitions, color=merged, shape=merged)) +
+  geom_jitter(position = position_jitter(height = 0.1, width = 0.3), alpha=1.0, size=3) +
+  ggtitle("Jitter Plot of Non-Trivial Partitions X Trivial Partitions ") +
+  xlab("Non-Trivial Partitions") +
+  ylab("Trivial Partitions")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(summ, aes(x=nonTrivialPartitions, y=trivialPartitions, color=merged, shape=merged)) +
+  geom_jitter(position = position_jitter(height = 0.1, width = 0.3), alpha=1.0, size=3) +
+  xlim(0, 5) +
+  ylim(0, 20) +
+  ggtitle("Jitter Plot of Non-Trivial Partitions X Trivial Partitions (zoomed)") +
+  xlab("Non-Trivial Partitions") +
+  ylab("Trivial Partitions")
+```
 
 ## Total Partitions
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=totalPartitions, y=..density.., fill=merged)) +
+ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1) +
   facet_wrap(~merged, nrow=2) +
-  ggtitle("Histograms of Total Partitions in a Pull Request") +
+  ggtitle("Histogram of Total Partitions in a Pull Request") +
   xlab("Total Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=totalPartitions, y=..density.., fill=merged)) +
-  geom_histogram(position = position_identity(), col="black", binwidth=1, alpha=0.5) +
-  ggtitle("Superimposed Histograms of Total Partitions in a Pull Request") +
+ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_dodge(), col="black", binwidth=1) +
+  ggtitle("Histogram of Total Partitions in a Pull Request (dodge)") +
   xlab("Total Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
 ```{r, echo=FALSE}
-ggplot(cprs, aes(x=merged, y=totalPartitions)) + 
+ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_stack(), col="black", binwidth=1) +
+  ggtitle("Histogram of Total Partitions in a Pull Request (stack)") +
+  xlab("Total Partitions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_fill(), col="black", binwidth=1) +
+  ggtitle("Histogram of Total Partitions in a Pull Request (fill)") +
+  xlab("Total Partitions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=merged, y=totalPartitions)) + 
   geom_boxplot() +
   ggtitle("Boxplots of Total Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Total Partitions")
 ```
 
-The graphs do not indicate a significant relationship between total partitions and whether the pull request was merged.
-
-# RQ2: How common are pull requests that were merged but are not marked as such in GitHub?
-
 ```{r, echo=FALSE}
-mtMerge <- margin.table(table(cprs$markedAsMerged, cprs$merged), margin=1:2)
-mtMergeColSum <- margin.table(table(cprs$markedAsMerged, cprs$merged), margin=1)
-mtMergeRowSum <- margin.table(table(cprs$markedAsMerged, cprs$merged), margin=2)
-ptMerge <- prop.table(table(cprs$markedAsMerged, cprs$merged))
+ggplot(summ, aes(x=totalPartitions, color=merged)) +
+  geom_density() +
+  ggtitle("Density Plot of Total Partitions in a Pull Request") +
+  xlab("Merged") +
+  ylab("Total Partitions")
 ```
 
-|                            | Not Merged | Merged |  |
-|:--------------------------:|:------:|:----------:|:----------:|
-| GitHub reports as "Closed" |  `r mtMerge[1,1]` (`r percent(ptMerge[1,1])`)   |   `r mtMerge[1,2]` (`r percent(ptMerge[1,2])`)   | `r mtMergeColSum[1]` (`r percent(ptMerge[1,1] + ptMerge[1,2])`)
-| GitHub reports as "Merged" | `r mtMerge[2,1]` (0.0%) |   `r mtMerge[2,2]` (`r percent(ptMerge[2,2])`)   | `r mtMergeColSum[2]` (`r percent(ptMerge[2,1] + ptMerge[2,2])`)
-| | `r mtMergeRowSum[1]` (`r percent(ptMerge[1,1] + ptMerge[2,1])`) | `r mtMergeRowSum[2]` (`r percent(ptMerge[1,2] + ptMerge[2,2])`) | `r numPrs`  (100%) |
+## Ratio of Diff-regions in Non-Trivial Partitions (RDN)
+```{r, echo=FALSE}
+ggplot(summ, aes(x=rdn, y=0.1*..density.., fill=merged)) +
+  geom_histogram(position = position_identity(), col="black", binwidth=0.1) +
+  facet_wrap(~merged, nrow = 2) +
+  ggtitle("Histogram of Ratio of Diff-regions in Non-Trivial Partitions (RDN)") +
+  xlab("RDN") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
 
-Table: Two-way table depicting the variables: "merged" and "marked as merged"\label{tab:twoWayMerged}.
+```{r, echo=FALSE}
+ggplot(summ, aes(x=merged, y=rdn)) +
+  geom_boxplot() +
+  ggtitle("Boxplot of Ratio of Diff-regions in Non-Trivial Partitions (RDN)") +
+  xlab("Merged") +
+  ylab("RDN")
+```
 
-Looking at Table \ref{tab:twoWayMerged}, we can see that `r mtMerge[1,2]` (`r percent(ptMerge[1,2])`) of the pull requests were merged (accepted) but GitHub does not report them as having been merged. This result is compatible with the observations of Kalliamvakou et al. [[@kalliamvakou_promises_2014]] and provides further evidence that researchers should not rely on the GitHub status to determine which pull requests have been merged.
+```{r, echo=FALSE}
+ggplot(summ, aes(x=rdn, color=merged)) +
+  geom_density() +
+  ggtitle("Density Plot of Ratio of Diff-regions in Non-Trivial Partitions (RDN)") +
+  xlab("Merged") +
+  ylab("RDN")
+```
 
-Table \ref{tab:twoWayMerged} also shows that there were no false-positives i.e. when GitHub reported a pull request as merged, our manual inspection confirmed this.
+## Ratio of Diff-regions in Trivial Partitions (RDT)
+```{r, echo=FALSE}
+ggplot(summ, aes(x=rdt, y=0.1*..density.., fill=merged)) +
+  geom_histogram(position = position_identity(), col="black", binwidth=0.1) +
+  facet_wrap(~merged, nrow = 2) +
+  ggtitle("Histogram of Ratio of Diff-regions in Trivial Partitions (RDT)") +
+  xlab("RDT") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=merged, y=rdt)) +
+  geom_boxplot() +
+  ggtitle("Boxplot of Ratio of Diff-regions in Trivial Partitions (RDT)") +
+  xlab("Merged") +
+  ylab("RDT")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=rdt, color=merged)) +
+  geom_density() +
+  ggtitle("Density Plot of Ratio of Diff-regions in Trivial Partitions (RDT)") +
+  xlab("Merged") +
+  ylab("RDT")
+```
+
+## Diff-regions
+```{r, echo=FALSE}
+ggplot(summ, aes(x=diffs, y=3*..density.., fill=merged)) +
+  geom_histogram(position = position_identity(), col="black", binwidth=3) +
+  facet_wrap(~merged, nrow = 2) +
+  ggtitle("Histogram of Diff-regions") +
+  xlab("Diff-regions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged") +
+  xlim(0, 100)
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=merged, y=diffs)) +
+  geom_boxplot() +
+  ggtitle("Boxplot of Diff-regions") +
+  xlab("Merged") +
+  ylab("Diff-regions")
+```
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=diffs, color=merged)) +
+  geom_density() +
+  ggtitle("Density Plot of Diff-regions") +
+  xlab("Merged") +
+  ylab("Diff-regions")
+```
 
 # Conclusions
 
-We did not observe a relationship between the number of partitions detected by our implementation of ClusterChanges and whether the pull request was accepted. However, it is possible that the sample size was too small to detect such a relationship.
+TODO: Update this. Graphically, there seems to be a a small difference between the distributions.
 
-As for RQ2, we found that almost one third of the pull requests in the dataset were merged but GitHub did not report them as having been merged. Given that this is a common occurrence, researchers must consider this when automatically mining this data from GitHub.
+We did not observe a relationship between the number of partitions detected by our implementation of ClusterChanges and whether the pull request was accepted. However, it is possible that the sample size was too small to detect such a relationship.
 
 # References
