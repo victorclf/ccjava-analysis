@@ -87,6 +87,9 @@ Table: Summary of the dataset.
 # RQ1: Can we predict whether a pull request is merged (accepted) based on the number of partitions returned by ccjava?
 
 ## Non-Trivial Partitions
+
+### Visual Analysis
+
 ```{r, echo=FALSE, eval=FALSE}
 count(filter(summ, nonTrivialPartitions == 0, merged == "true")) / count(filter(summ, merged == "true"))
 ```
@@ -156,11 +159,14 @@ Logistic regression allows us to evaluate if there is an association between the
 
 Our null hypothesis H0 for this test is that the probability of a pull request being merged is not associated with the number of non-trivial partitions and we use a significance level of 5%.
 
-The p-value from the z-test for the coefficient of nonTrivialPartitions is high and therefore we do not reject its corresponding null hypothesis that the coefficient is different than 0.
+The p-value from the z-test for the coefficient of nonTrivialPartitions is higher than 0.05 and therefore we do not reject its corresponding null hypothesis that the coefficient is different than 0.
 
-Moreover, using the likelihood ratio test to evaluate the goodness of fit of the model by comparing it with the null model, we obtained a p-value of `r ntpGlmLikeRatioP`. Thus, *there is no evidence to reject the null hypothesis H0* that there is no relationship between the probability of a pull request being merged and the number of non-trivial partitions at a significance level of 5%.
+Moreover, using the likelihood ratio test to evaluate the goodness of fit of the model by comparing it with the null model, we obtained a p-value of `r ntpGlmLikeRatioP`. Thus, *there is no evidence to reject the null hypothesis H0* at a significance level of 5%.
 
 ## Trivial Partitions
+
+### Visual Analysis
+
 ```{r, echo=FALSE}
 ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1) +
@@ -214,7 +220,23 @@ ggplot(summ, aes(x=trivialPartitions, color=merged)) +
   ylab("Trivial Partitions")
 ```
 
+### Logistic Regression
+
+```{r, echo=FALSE}
+tpGlm <- glm(merged ~ trivialPartitions, family=binomial(link = "logit"), data=summ)
+summary(tpGlm)
+tpGlmLikeRatioP <- with(tpGlm, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
+```
+
+Our null hypothesis H0 for this test is that the probability of a pull request being merged is not associated with the number of trivial partitions and we use a significance level of 5%.
+
+The p-value from the z-test for the coefficient of trivialPartitions is higher than 0.05 and therefore we do not reject its corresponding null hypothesis that the coefficient is different than 0.
+
+Moreover, using the likelihood ratio test to evaluate the goodness of fit of the model by comparing it with the null model, we obtained a p-value of `r tpGlmLikeRatioP`. Thus, *there is no evidence to reject the null hypothesis H0* at a significance level of 5%.
+
 ## Non-Trivial Partitions X Trivial Partitions
+
+### Visual Analysis
 ```{r, echo=FALSE}
 ggplot(summ, aes(x=nonTrivialPartitions, y=trivialPartitions)) +
   geom_jitter(position = position_jitter(height = 0, width = 0.3), alpha=0.5, size=3) +
@@ -241,6 +263,20 @@ ggplot(summ, aes(x=nonTrivialPartitions, y=trivialPartitions, color=merged, shap
   xlab("Non-Trivial Partitions") +
   ylab("Trivial Partitions")
 ```
+
+### Logistic Regression
+
+```{r, echo=FALSE}
+txntpGlm <- glm(merged ~ nonTrivialPartitions * trivialPartitions, family=binomial(link = "logit"), data=summ)
+summary(txntpGlm)
+txntpGlmLikeRatioP <- with(txntpGlm, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
+```
+
+Our null hypothesis H0 for this test is that the probability of a pull request being merged is not associated with the number of non-trivial partitions and the number of trivial partitions and we use a significance level of 5%.
+
+The p-values from the z-test for the coefficients other than the intercept are all higher than 0.05 and therefore we do not reject the corresponding null hypotheses that these coefficients are different from 0.
+
+Moreover, using the likelihood ratio test to evaluate the goodness of fit of the model by comparing it with the null model, we obtained a p-value of `r txntpGlmLikeRatioP`. Thus, *there is no evidence to reject the null hypothesis H0* at a significance level of 5%.
 
 ## Total Partitions
 ```{r, echo=FALSE}
@@ -380,8 +416,8 @@ ggplot(summ, aes(x=diffs, color=merged)) +
 
 # Conclusions
 
-TODO: Update this. Graphically, there seems to be a a small difference between the distributions.
+Graphically, there seems to be a small difference between the distributions of merged and non-merged pull requests according to the number of partitions. However, using logistic regression we did not find evidence of a relationship between the number of partitions detected by our implementation of ClusterChanges and whether the pull request was accepted. 
 
-We did not observe a relationship between the number of partitions detected by our implementation of ClusterChanges and whether the pull request was accepted. However, it is possible that the sample size was too small to detect such a relationship.
+It is possible that the sample size was too small to detect such a relationship and another study with a larger sample size would be interesting.
 
 # References
