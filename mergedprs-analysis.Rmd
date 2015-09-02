@@ -22,9 +22,10 @@ summ <- read.csv("data/allSummary.csv.gz")
 ```
 
 ```{r, echo=FALSE, eval=FALSE}
+summ <- read.csv("data/allSummary.csv.gz")
 set.seed(1334532099)
-pullRequestSampleForMergedInspection <- sample_n(summ, 200)
-write.csv(pullRequestSampleForMergedInspection, "mergedprs-analysis-sample.csv")
+summ <- sample_n(summ, 1000)
+write.csv(summ, "mergedprs-analysis-sample.csv")
 ```
 
 ```{r, echo=FALSE}
