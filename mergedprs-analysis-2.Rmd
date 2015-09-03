@@ -1,7 +1,7 @@
 ---
-title: "Analysis of sample of 110 closed pull requests"
+title: "Analysis of sample of 513 pull requests"
 csl: "ieee.csl"
-bibliography: "mergedprs-analysis.bib"
+bibliography: "mergedprs-analysis-2.bib"
 output: 
   pdf_document:
     toc: true
@@ -17,19 +17,23 @@ library(ggplot2)
 library(grid)
 library(scales)
 library(pander)
-
-summ <- read.csv("data/allSummary.csv.gz")
 ```
 
 ```{r, echo=FALSE, eval=FALSE}
 summ <- read.csv("data/allSummary.csv.gz")
 set.seed(1334532099)
-summ <- sample_n(summ, 1000)
-write.csv(summ, "mergedprs-analysis-sample.csv")
+summ <- sample_n(summ, 513)
+write.csv(summ, "mergedprs-analysis-sample-2.csv")
 ```
 
 ```{r, echo=FALSE}
-summ <- read.csv("mergedprs-analysis-sample.csv")
+summ <- read.csv("mergedprs-analysis-sample-2.csv")
+
+# Remove pull requests without diffs
+summ <- filter(summ, diffs >= 1)
+# Remove open pull requests
+summ <- filter(summ, merged == "true" | merged == "false")
+
 pullRequests <- select(summ, projectName, pullRequestId)
 partitions <- read.csv("data/allPartitions.csv.gz")
 partitions <- partitions %>%
@@ -48,9 +52,6 @@ summ <- summ %>%
 summ <- summ %>%
   mutate(diffsInTrivialPartitions = diffs - diffsInNonTrivialPartitions) %>%
   mutate(rdt = diffsInTrivialPartitions / diffs)
-
-# Remove pull requests without diffs
-summ <- filter(summ, diffs >= 1)
 ```
 
 # Research Question
@@ -61,15 +62,15 @@ Intuitively, we expect to observe an inverse correlation between the number of n
 
 # Dataset
 
-We manually inspected 110 closed pull requests selected at random from the most popular projects in GitHub and, for each of them, we determined: 
+We manually inspected 513 pull requests selected at random from the most popular projects in GitHub and, for each of them, we determined: 
 
 * if it was merged (accepted);
 * if its status on GitHub is set to "merged"";
 * the cause for rejection if it was not merged.
 
-This dataset can be downloaded at: https://github.com/victorclf/ccjava-analysis/blob/master/mergedprs-analysis-sample.csv
+This dataset can be downloaded at: https://github.com/victorclf/ccjava-analysis/blob/master/mergedprs-analysis-sample-2.csv
 
-For this analysis, we removed pull requests that did not have any diff-regions and ended up with 101 closed pull requests for the analysis. Some pull requests do not have any diff-regions because ccjava does not consider code deletions and diff-regions which contain only comments, import statements, package declarations, blank characters and empty lines.
+For this analysis, we discarded open pull requests and pull requests without any diff-regions and ended up with `r count(summ)` closed pull requests for the analysis. Some pull requests do not have any diff-regions because ccjava does not consider code deletions and diff-regions which contain only comments, import statements, package declarations, blank characters and empty lines.
 
 ```{r, echo=FALSE}
 numPrs <- count(summ)$n
