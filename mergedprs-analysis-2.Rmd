@@ -85,6 +85,15 @@ numNonMergedPrs <- count(filter(summ, merged == "false"))$n
 
 Table: Summary of the dataset.
 
+```{r, echo=FALSE}
+ggplot(summ, aes(x=projectName, y=..count.., fill=merged)) +
+  geom_bar(position = position_stack(), col="black") +
+  scale_x_discrete(labels = abbreviate) +
+  ggtitle("Histogram of Merged Pull Requests per Project") +
+  xlab("Project Name") +
+  ylab("Pull Requests") +
+  labs(fill = "Merged")
+```
 
 # RQ1: Can we predict whether a pull request is merged (accepted) based on the number of partitions returned by ccjava?
 
@@ -106,9 +115,23 @@ ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
   labs(fill = "Merged")
 ```
 
+We can see there is an outlier with 46 non-trivial partitions. This pull request consists of a refactoring where the return type of several methods was changed and test cases were added for these methods. Due to the limitations of ClusterChanges, a lot of partitions were generated for this pull request.
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_identity(), col="black", binwidth=1) +
+  xlim(c(0, 15)) +
+  facet_wrap(~merged, nrow = 2) +
+  ggtitle("Histogram of Non-Trivial Partitions in a Pull Request (zoomed)") +
+  xlab("Non-Trivial Partitions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
 ```{r, echo=FALSE}
 ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_dodge(), col="black", binwidth=1) +
+  xlim(c(0, 15)) +
   ggtitle("Histogram of Non-Trivial Partitions in a Pull Request (dodge)") +
   xlab("Non-Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
@@ -118,6 +141,7 @@ ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
 ```{r, echo=FALSE}
 ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_stack(), col="black", binwidth=1) +
+  xlim(c(0, 15)) +
   ggtitle("Histogram of Non-Trivial Partitions in a Pull Request (stack)") +
   xlab("Non-Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
@@ -128,22 +152,25 @@ ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
 ggplot(summ, aes(x=nonTrivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_fill(), col="black", binwidth=1) +
   ggtitle("Histogram of Non-Trivial Partitions in a Pull Request (fill)") +
+  xlim(c(0, 15)) +
   xlab("Non-Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(summ, aes(x=merged, y=nonTrivialPartitions)) +
   geom_boxplot() +
+  ylim(c(0, 15)) +
   ggtitle("Boxplot of Non-Trivial Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Non-Trivial Partitions")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(summ, aes(x=nonTrivialPartitions, color=merged)) +
   geom_density() +
+  xlim(c(0, 10)) +
   ggtitle("Density Plot of Non-Trivial Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Non-Trivial Partitions")
@@ -179,9 +206,23 @@ ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
   labs(fill = "Merged")
 ```
 
+At first glance, there is an obvious outlier with 394 trivial partitions, which is the same one with 46 non-trivial partitions. To better visualize the data, we limit the x axis to a maximum of 32 trivial partitions (only 4 pull requests have more than 31 trivial partitions).
+
+```{r, echo=FALSE}
+ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
+  geom_histogram(position = position_identity(), col="black", binwidth=1) +
+  xlim(c(0, 32)) +
+  facet_wrap(~merged, nrow = 2) +
+  ggtitle("Histogram of Trivial Partitions in a Pull Request") +
+  xlab("Trivial Partitions") +
+  ylab("Proportion (in-group) of Pull Requests") +
+  labs(fill = "Merged")
+```
+
 ```{r, echo=FALSE}
 ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_dodge(), col="black", binwidth=1) +
+  xlim(c(0, 32)) +
   ggtitle("Histogram of Trivial Partitions in a Pull Request (dodge)") +
   xlab("Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
@@ -191,6 +232,7 @@ ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
 ```{r, echo=FALSE}
 ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_stack(), col="black", binwidth=1) +
+  xlim(c(0, 32)) +
   ggtitle("Histogram of Trivial Partitions in a Pull Request (stack)") +
   xlab("Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
@@ -200,23 +242,26 @@ ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
 ```{r, echo=FALSE}
 ggplot(summ, aes(x=trivialPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_fill(), col="black", binwidth=1) +
+  xlim(c(0, 32)) +
   ggtitle("Histogram of Trivial Partitions in a Pull Request (fill)") +
   xlab("Trivial Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(summ, aes(x=merged, y=trivialPartitions)) + 
   geom_boxplot() +
+  ylim(c(0,32)) +
   ggtitle("Boxplots of Trivial Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Trivial Partitions")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(summ, aes(x=trivialPartitions, color=merged)) +
   geom_density() +
+  xlim(c(0, 32)) +
   ggtitle("Density Plot of Trivial Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Trivial Partitions")
@@ -239,18 +284,22 @@ Moreover, using the likelihood ratio test to evaluate the goodness of fit of the
 ## Non-Trivial Partitions X Trivial Partitions
 
 ### Visual Analysis
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(summ, aes(x=nonTrivialPartitions, y=trivialPartitions)) +
-  geom_jitter(position = position_jitter(height = 0, width = 0.3), alpha=0.5, size=3) +
+  geom_jitter(position = position_jitter(height = 0, width = 0.3), alpha=0.3, size=3) +
+  xlim(0, 10) +
+  ylim(0, 20) +
   facet_wrap(~merged, nrow = 2) +
   ggtitle("Jitter Plot of Non-Trivial Partitions X Trivial Partitions (only width is jittered)") +
   xlab("Non-Trivial Partitions") +
   ylab("Trivial Partitions")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(summ, aes(x=nonTrivialPartitions, y=trivialPartitions, color=merged, shape=merged)) +
   geom_jitter(position = position_jitter(height = 0.1, width = 0.3), alpha=1.0, size=3) +
+  xlim(0, 10) +
+  ylim(0, 32) +
   ggtitle("Jitter Plot of Non-Trivial Partitions X Trivial Partitions ") +
   xlab("Non-Trivial Partitions") +
   ylab("Trivial Partitions")
@@ -274,6 +323,8 @@ summary(txntpGlm)
 txntpGlmLikeRatioP <- with(txntpGlm, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
 ```
 
+TODO: Update this to reflect new sample results!
+
 Our null hypothesis H0 for this test is that the probability of a pull request being merged is not associated with the number of non-trivial partitions and the number of trivial partitions and we use a significance level of 5%.
 
 The p-values from the z-test for the coefficients other than the intercept are all higher than 0.05 and therefore we do not reject the corresponding null hypotheses that these coefficients are different from 0.
@@ -281,9 +332,10 @@ The p-values from the z-test for the coefficients other than the intercept are a
 Moreover, using the likelihood ratio test to evaluate the goodness of fit of the model by comparing it with the null model, we obtained a p-value of `r txntpGlmLikeRatioP`. Thus, *there is no evidence to reject the null hypothesis H0* at a significance level of 5%.
 
 ## Total Partitions
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_identity(), col="black", binwidth=1) +
+  xlim(c(0, 40)) +
   facet_wrap(~merged, nrow=2) +
   ggtitle("Histogram of Total Partitions in a Pull Request") +
   xlab("Total Partitions") +
@@ -291,44 +343,49 @@ ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
   labs(fill = "Merged")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_dodge(), col="black", binwidth=1) +
+  xlim(c(0, 40)) +
   ggtitle("Histogram of Total Partitions in a Pull Request (dodge)") +
   xlab("Total Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_stack(), col="black", binwidth=1) +
+  xlim(c(0, 40)) +
   ggtitle("Histogram of Total Partitions in a Pull Request (stack)") +
   xlab("Total Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(summ, aes(x=totalPartitions, y=..density.., fill=merged)) +
   geom_histogram(position = position_fill(), col="black", binwidth=1) +
+  xlim(c(0, 40)) +
   ggtitle("Histogram of Total Partitions in a Pull Request (fill)") +
   xlab("Total Partitions") +
   ylab("Proportion (in-group) of Pull Requests") +
   labs(fill = "Merged")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(summ, aes(x=merged, y=totalPartitions)) + 
   geom_boxplot() +
+  ylim(c(0, 40)) +
   ggtitle("Boxplots of Total Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Total Partitions")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(summ, aes(x=totalPartitions, color=merged)) +
   geom_density() +
+  xlim(c(0, 40)) +
   ggtitle("Density Plot of Total Partitions in a Pull Request") +
   xlab("Merged") +
   ylab("Total Partitions")
@@ -418,8 +475,6 @@ ggplot(summ, aes(x=diffs, color=merged)) +
 
 # Conclusions
 
-Graphically, there seems to be a small difference between the distributions of merged and non-merged pull requests according to the number of partitions. However, using logistic regression we did not find evidence of a relationship between the number of partitions detected by our implementation of ClusterChanges and whether the pull request was accepted. 
-
-It is possible that the sample size was too small to detect such a relationship and another study with a larger sample size would be interesting.
+TODO
 
 # References
