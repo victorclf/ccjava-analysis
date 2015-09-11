@@ -247,34 +247,35 @@ Logistic regression allows us to evaluate if there is an association between the
 
 Our null hypothesis H0 for this test is that the probability of a pull request being merged is not associated with the number of non-trivial partitions and we use a significance level of 5%. The alternative hypothesis H1 is that there is in fact a relationship between the two variables.
 
-The p-value from the z-test for the coefficient of nonTrivialPartitions is lower than 0.05 and therefore we do not reject its corresponding null hypothesis that the coefficient is equal to 0.
+The p-value from the z-test for the coefficient of nonTrivialPartitions is lower than 0.05 and therefore we reject its corresponding null hypothesis that the coefficient is equal to 0.
 
 Moreover, using the likelihood ratio test to evaluate the goodness of fit of the model by comparing it with the null model, we obtained a p-value of `r ntpGlmLikeRatioP`. Thus, we reject the null hypothesis H0 and accept H1 at a significance level of 5%.
 
 The equation for this regression model is the following:
 
-$Y/1-Y = exp(`r txntpGlm$coefficients[1]` + `r txntpGlm$coefficients[2]` * NTP + `r txntpGlm$coefficients[3]` * TP + `r txntpGlm$coefficients[4]` * NTP * TP)$
 
-\newpage
+**$Y/1-Y = exp(`r ntpGlm$coefficients[1]` + `r ntpGlm$coefficients[2]` * NTP)$**
+
+
+Y is the probability that the pull request with NTP non-trivial partitions will be merged and $Y/1 - Y$ is the odds for being merged. For instance, if a pull request is given odds of being merged equal to 4, it means that it is 4 times more likely to be will be merged than not. In terms of probability, the probability of being merged in this example would be 0.8.
 
 ```{r, echo=FALSE}
-pander(t(tabm1(0:10, 0:20)), style="rmarkdown", emphasize.rownames=FALSE, split.tables=120)
-```
+m1 <- function(ntp) {
+  return (exp(ntpGlm$coefficients[1] + ntpGlm$coefficients[2] * ntp))
+}
 
-The table above shows the values 
+m1x <- seq(0, 10, by=1)
+m1y <- m1(m1x)
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-summM1 <- select(as.data.frame(tabm1(0:10, 0:20)), trivialPartitions = Var2, nonTrivialPartitions = Var1, odds = Freq)
-
-ggplot(summM1, aes(x=nonTrivialPartitions, y=trivialPartitions)) +
-  geom_tile(aes(fill=odds)) +
+ggplot() +
+  geom_point(aes(x=m1x, y=m1y)) +
   scale_x_discrete() +
-  scale_y_discrete() +
+  ggtitle("Simple Logistic Regression Model") +
   xlab("Non-Trivial Partitions") +
-  ylab("Trivial Partitions") +
-  labs(fill = "Odds for merge")
+  ylab("Odds for being Merged")
 ```
 
+According to the plot of the model, pull requests with more than 6 non-trivial partitions are more likely to be rejected than merged.
 
 ## Trivial Partitions
 
@@ -390,7 +391,7 @@ Moreover, using the likelihood ratio test to evaluate the goodness of fit of the
 ## Non-Trivial Partitions X Trivial Partitions
 
 ### Visual Analysis
-```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=11}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7.5, fig.height=9.5}
 ggplot(summ, aes(x=nonTrivialPartitions, y=trivialPartitions)) +
   geom_jitter(position = position_jitter(height = 0, width = 0.3), alpha=0.3, size=3) +
   xlim(0, 10) +
@@ -430,25 +431,6 @@ txntpGlm <- glm(merged ~ nonTrivialPartitions * trivialPartitions, family=binomi
 summary(txntpGlm)
 txntpGlmLikeRatioP <- with(txntpGlm, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
 txntpVSntpGlmLikeRatioP <- pchisq(ntpGlm$deviance - txntpGlm$deviance, ntpGlm$df.residual - txntpGlm$df.residual, lower.tail = FALSE)
-```
-
-```{r, echo=FALSE}
-m1 <- function(ntp, tp) {
-  return (exp(txntpGlm$coefficients[1] + txntpGlm$coefficients[2] * ntp + txntpGlm$coefficients[3] * tp + txntpGlm$coefficients[4] * ntp * tp))
-}
-
-tabm1 <- function(ntpSeq, tpSeq) {
-  r <- matrix(nrow=length(ntpSeq), ncol=length(tpSeq))
-  for (ntpIndex in seq(along.with=ntpSeq)) {
-    for (tpIndex in seq(along.with=tpSeq)) {
-      r[ntpIndex, tpIndex] <- m1(ntpSeq[ntpIndex], tpSeq[tpIndex])
-    }
-  }
-  s <- as.table(r)
-  rownames(s) <- ntpSeq
-  colnames(s) <- tpSeq
-  return(s)
-}
 ```
 
 Our null hypothesis H0 for this test is that the probability of a pull request being merged is not associated with the number of non-trivial partitions and the number of trivial partitions and we use a significance level of 5%.
@@ -594,6 +576,8 @@ ggplot(summ, aes(x=diffs, color=merged)) +
 
 # Conclusions
 
-**TODO**
+We found a statiscally significant relationship between the probability of a pull request being merged and the number of non-trivial partitions. Also, we created a logistic regression model for prediciting the probability of a pull request being merged given the number of non-trivial partitions in it. According to that model, pull requests with more than 6 non-trivial partitions are more likely to be rejected than merged.
+
+
 
 # References
