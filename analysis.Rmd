@@ -366,7 +366,7 @@ As in the original study, we group the pull requests based on the number of part
 * **$<= 1$ non-trivial partition** (`r percent(nonTrivialPartitionsECDF(1))`): We manually investigated a random sample of 50 changesets that fall under this category so as to determine if ClusterChanges assigned unrelated diff-regions to the same non-trivial partition.
 * **2 - 5 non-trivial partitions** (`r percent(nonTrivialPartitionsECDF(5) - nonTrivialPartitionsECDF(1))`): Changes of this size will be analyzed in a future qualitative study.
 * **$>= 6$ non-trivial partitions** (`r percent(1 - nonTrivialPartitionsECDF(5))`): Due to the low amount of pull requests with this many non-trivial partitions and the time constraints in the planned qualitative study, we do not further investigate the pull requests in this group.
-* **$> 10$ trivial partitions** (`r percent(1 - trivialPartitionsECDF(10))`): In accordance with the original study hypothesis that "a single developer’s change cannot consist of so many independent (sub) changes", we manually investigated 20 of the 211 pull requests which belong to this group in order to determine what relationships ClusterChanges does not detect and, as a result, gain insight on how it can be improved.
+* **$> 10$ trivial partitions** (`r percent(1 - trivialPartitionsECDF(10))`): In accordance with the original study hypothesis that "a single developer’s change cannot consist of so many independent (sub) changes", we manually investigated 15 of the 77 pull requests which belong to this group in order to determine what relationships ClusterChanges does not detect and, as a result, gain insight on how it can be improved.
 
 
 ### Pull Requests with $<= 1$ Non-Trivial Partitions
