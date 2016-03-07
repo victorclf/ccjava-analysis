@@ -14,7 +14,7 @@ output:
 
 # Introduction
 
-Considering the promising results of the recently devised ClusterChanges (CC) technique published by Barnett et al. [[@barnett_helping_2015]], we would like to better understand how widely applicable the technique is. To this end, we intend to analyze how ClusterChanges performs in a different context, namely open source software projects written by different organizations. 
+Considering the promising results of the recently devised ClusterChanges (CC) technique published by Barnett et al. [[@barnett_helping_2015]] which automatically partitions changesets containing independent modifications to facilitate code review, we would like to better understand how widely applicable the technique is. To this end, we intend to analyze how ClusterChanges performs in a different context, namely open source software projects written by different organizations. 
 
 In this initial study, we aimed to replicate the original quantitative study as closely as possible while using an open source software context. Therefore, we applied the ClusterChanges technique to a sample of 1000 pull requests from the most popular Java OSS projects hosted at GitHub. 
 
@@ -171,7 +171,7 @@ The [1st pull request](https://github.com/elastic/elasticsearch/pull/5708) was a
 
 The [2nd pull request](https://github.com/netty/netty/pull/370) was accepted by the developers but merged manually and consists of code style (formatting) modifications. Most of the diff-regions are additions of a copyright header and ClusterChanges does not identify such relationships. This explains why so many source files were changed and why non-trivial partitions were not found.
 
-The [3rd pull request](https://github.com/netty/netty/pull/4) was rejected by the developers and there is not any discussion as to why that happened. After investigating the pull requesst message and the files changed, it seems reasonable to assume that this pull request was created incorrectly. The pull request message indicates that only the Javadoc of some methods were fixed, but 7,825 lines were added and most of the source code files were created. The presence of such invalid pull requests negatively impacts our assessment of the efficacy of ClusterChanges.
+The [3rd pull request](https://github.com/netty/netty/pull/4) was rejected by the developers and there is not any discussion as to why that happened. After investigating the pull request message and the files changed, it seems reasonable to assume that this pull request was created incorrectly. The pull request message indicates that only the Javadoc of some methods were fixed, but 7,825 lines were added and most of the source code files were created. The presence of such invalid pull requests negatively impacts our assessment of the efficacy of ClusterChanges.
 
 The [4th pull request](https://github.com/spring-projects/spring-framework/pull/554) was accepted by the developers and is valid. The author of the pull request created a compiler for a domain-specific language of the Spring Framework, thus a large number of files were created and modified. Apparently, this is a single task but 6 non-trivial partitions were identified nonetheless.
 
@@ -202,7 +202,7 @@ ggplot(methodsChanged, aes(x=methodsChanged)) +
   ylab("F(x)")
 ```
 
-The graph (Figure \ref{fig:methodsChanged}) show that the number of methods changed in a pull request tend to be small, but that it varies significantly and therefore pull requests that affect several methods are not unusual as evidenced by the very long positive tail. As much as `r percent(methodsChangedECDF(1))` of the pull requests only changed 1 method and the median of methods changed is `r methodsChangedQuantiles["50%"]`. In contrast, the second half of the distribution grows very quickly according to the quantiles. More specifically, we can see that 25% of the pull requests changed at least `r methodsChangedQuantiles["75%"]` methods and that 10% of the pull requests changed at least `r methodsChangedQuantiles["90%"]` methods.
+The graph (Figure \ref{fig:methodsChanged}) shows that the number of methods changed in a pull request tend to be small, but that it varies significantly and therefore pull requests that affect several methods are not unusual as evidenced by the very long positive tail. As much as `r percent(methodsChangedECDF(1))` of the pull requests only changed 1 method and the median of methods changed is `r methodsChangedQuantiles["50%"]`. In contrast, the second half of the distribution grows very quickly according to the quantiles. More specifically, we can see that 25% of the pull requests changed at least `r methodsChangedQuantiles["75%"]` methods and that 10% of the pull requests changed at least `r methodsChangedQuantiles["90%"]` methods.
 
 We analyzed the 5 pull requests with the most methods changed to see what caused so many methods to be modified. These pull requests are listed below:
 
